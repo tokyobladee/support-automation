@@ -10,7 +10,16 @@ const keywordRules = [
   {
     category: ticketCategories.accountAccess,
     priority: priorityLevels.high,
-    keywords: ["login", "password", "account", "email change", "не можу увійти", "не могу войти"],
+    keywords: [
+      "login",
+      "password",
+      "account",
+      "email change",
+      "personal data",
+      "delete all my data",
+      "не можу увійти",
+      "не могу войти"
+    ],
     reviewReasons: [reviewReasons.policySensitiveCategory]
   },
   {
@@ -22,25 +31,25 @@ const keywordRules = [
   {
     category: ticketCategories.expertComplaint,
     priority: priorityLevels.high,
-    keywords: ["expert", "rude", "wrong advice", "complaint", "експерт", "эксперт"],
+    keywords: ["expert", "rude", "wrong advice", "complaint", "експерт", "эксперт", "грубо"],
     reviewReasons: [reviewReasons.policySensitiveCategory]
   },
   {
     category: ticketCategories.billing,
     priority: priorityLevels.normal,
-    keywords: ["invoice", "payment", "billing", "charged", "оплата", "счет", "рахунок"],
+    keywords: ["invoice", "payment", "billing", "charged", "оплата", "счет", "рахунок", "списали"],
     reviewReasons: [reviewReasons.policySensitiveCategory]
   },
   {
     category: ticketCategories.subscription,
     priority: priorityLevels.normal,
-    keywords: ["subscription", "plan", "cancel", "renewal", "підписк", "подписк"],
+    keywords: ["subscription", "plan", "cancel", "renewal", "підписк", "подписк", "скасувати"],
     reviewReasons: []
   },
   {
     category: ticketCategories.productGuidance,
     priority: priorityLevels.low,
-    keywords: ["how do i", "how to", "where can i", "як", "как"],
+    keywords: ["how do i", "how to", "where can i", "як", "как", "como puedo"],
     reviewReasons: []
   }
 ];

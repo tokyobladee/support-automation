@@ -132,7 +132,15 @@ importers:
 
   packages/retrieval: {}
 
-  packages/testing: {}
+  packages/testing:
+    dependencies:
+      '@support/domain':
+        specifier: workspace:*
+        version: link:../domain
+    devDependencies:
+      vitest:
+        specifier: ^4.0.15
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
 
 packages:
 
