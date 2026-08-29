@@ -1,5 +1,11 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import {
+  InMemoryClassificationRepository,
+  MockTicketClassifierProvider,
+  TicketClassificationService
+} from "@support/ai";
+import { registerClassificationRoutes } from "./routes/classifications.js";
 
 const healthJsonSchema = {
   type: "object",
@@ -15,10 +21,19 @@ const healthJsonSchema = {
   }
 };
 
-export async function buildApp() {
+function createDefaultClassificationService() {
+  return new TicketClassificationService({
+    provider: new MockTicketClassifierProvider(),
+    repository: new InMemoryClassificationRepository()
+  });
+}
+
+export async function buildApp(options = {}) {
   const app = Fastify({
     logger: true
   });
+  const classificationService =
+    options.classificationService ?? createDefaultClassificationService();
 
   await app.register(cors, {
     origin: true
@@ -34,6 +49,10 @@ export async function buildApp() {
     status: "ok",
     service: "support-api"
   }));
+
+  await app.register(registerClassificationRoutes, {
+    classificationService
+  });
 
   return app;
 }
