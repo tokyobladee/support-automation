@@ -38,6 +38,7 @@ pnpm-debug.log*
 .cache/
 .parcel-cache/
 .eslintcache
+packages/database/src/generated/
 
 # Package manager caches
 .npm/
