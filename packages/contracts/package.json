@@ -13,6 +13,7 @@
     "schema:check": "node src/index.js"
   },
   "dependencies": {
+    "@support/domain": "workspace:*",
     "zod": "^4.1.13"
   },
   "devDependencies": {

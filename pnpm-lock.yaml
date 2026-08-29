@@ -81,6 +81,9 @@ importers:
 
   packages/contracts:
     dependencies:
+      '@support/domain':
+        specifier: workspace:*
+        version: link:../domain
       zod:
         specifier: ^4.1.13
         version: 4.4.3
