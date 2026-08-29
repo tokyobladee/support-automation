@@ -1,0 +1,24 @@
+{
+  "name": "@support/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "schema:check": "node -e \"import('./next.config.js').then(() => true)\""
+  },
+  "dependencies": {
+    "@support/contracts": "workspace:*",
+    "@support/domain": "workspace:*",
+    "next": "^16.0.10",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.15"
+  }
+}

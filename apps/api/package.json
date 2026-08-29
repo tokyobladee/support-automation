@@ -1,0 +1,22 @@
+{
+  "name": "@support/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "build": "node --check src/server.js",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "schema:check": "node src/env.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.1",
+    "@support/contracts": "workspace:*",
+    "fastify": "^5.6.2",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.15"
+  }
+}

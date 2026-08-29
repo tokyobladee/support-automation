@@ -1,0 +1,31 @@
+{
+  "name": "support-ai-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "turbo test",
+    "schema:check": "turbo schema:check",
+    "dev:web": "pnpm --filter @support/web dev",
+    "dev:api": "pnpm --filter @support/api dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "turbo": "^2.6.3",
+    "vitest": "^4.0.15"
+  }
+}
