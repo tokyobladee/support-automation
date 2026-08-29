@@ -1,9 +1,5 @@
-export class AiProvider {
-  async classifyTicket(_request) {
-    throw new Error("AiProvider.classifyTicket must be implemented");
-  }
-
-  async generateReplyVariants(_request) {
-    throw new Error("AiProvider.generateReplyVariants must be implemented");
-  }
-}
+export { AiProvider, ClassificationRepository } from "./ports.js";
+export { buildTicketClassificationPrompt } from "./ticket-classification-prompt.js";
+export { TicketClassificationService } from "./ticket-classification-service.js";
+export { MockTicketClassifierProvider } from "./mock-ticket-classifier-provider.js";
+export { InMemoryClassificationRepository } from "./in-memory-classification-repository.js";

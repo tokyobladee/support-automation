@@ -9,7 +9,11 @@
   "scripts": {
     "build": "node --check src/index.js",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "schema:check": "node src/index.js"
+  },
+  "dependencies": {
+    "@support/contracts": "workspace:*",
+    "@support/domain": "workspace:*"
   }
 }
