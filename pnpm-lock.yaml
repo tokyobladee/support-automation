@@ -105,7 +105,11 @@ importers:
 
   packages/domain: {}
 
-  packages/retrieval: {}
+  packages/retrieval:
+    dependencies:
+      '@support/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/testing:
     dependencies:

@@ -11,5 +11,8 @@
     "lint": "eslint .",
     "test": "node --test",
     "schema:check": "node src/index.js"
+  },
+  "dependencies": {
+    "@support/contracts": "workspace:*"
   }
 }

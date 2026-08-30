@@ -7,6 +7,8 @@ export default [
     ignores: [
       "node_modules/**",
       ".next/**",
+      "**/.next/**",
+      "**/.turbo/**",
       "dist/**",
       "build/**",
       "coverage/**",

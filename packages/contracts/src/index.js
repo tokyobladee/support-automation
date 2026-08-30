@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   automationEligibilityValues,
+  knowledgeVisibilityValues,
   priorityValues,
   reviewReasonValues,
   ticketCategoryValues
@@ -36,4 +37,59 @@ export const classificationResponseSchema = z.object({
       reason: z.string().trim().min(1).max(500)
     })
   )
+});
+
+export const knowledgeDocumentInputSchema = z.object({
+  title: z.string().trim().min(1).max(240),
+  source: z.string().trim().min(1).max(120),
+  sourceUri: z.string().trim().url().optional(),
+  version: z.string().trim().min(1).max(80),
+  language: z.string().trim().min(2).max(12).default("en"),
+  visibility: z.enum(knowledgeVisibilityValues).default("internal"),
+  tags: z.array(z.string().trim().min(1).max(48)).default([]),
+  validFrom: z.string().trim().datetime().optional(),
+  validUntil: z.string().trim().datetime().optional(),
+  content: z.string().trim().min(1).max(100000)
+});
+
+export const knowledgeChunkSchema = z.object({
+  id: z.string().trim().min(1),
+  documentId: z.string().trim().min(1),
+  position: z.number().int().min(0),
+  content: z.string().trim().min(1),
+  contentHash: z.string().trim().min(64).max(64),
+  tokenCount: z.number().int().positive(),
+  metadata: z.record(z.string(), z.unknown()).default({})
+});
+
+export const knowledgeDocumentSchema = knowledgeDocumentInputSchema.omit({ content: true }).extend({
+  id: z.string().trim().min(1),
+  contentHash: z.string().trim().min(64).max(64),
+  chunks: z.array(knowledgeChunkSchema)
+});
+
+export const knowledgeSearchRequestSchema = z.object({
+  query: z.string().trim().min(1).max(2000),
+  topK: z.number().int().min(1).max(20).default(5),
+  language: z.string().trim().min(2).max(12).optional(),
+  tags: z.array(z.string().trim().min(1).max(48)).default([])
+});
+
+export const knowledgeCitationSchema = z.object({
+  documentId: z.string().trim().min(1),
+  chunkId: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  source: z.string().trim().min(1),
+  sourceUri: z.string().trim().url().optional(),
+  version: z.string().trim().min(1),
+  language: z.string().trim().min(2),
+  position: z.number().int().min(0),
+  quote: z.string().trim().min(1),
+  relevanceScore: z.number().min(0).max(1),
+  tags: z.array(z.string())
+});
+
+export const knowledgeSearchResponseSchema = z.object({
+  query: z.string().trim().min(1),
+  citations: z.array(knowledgeCitationSchema)
 });

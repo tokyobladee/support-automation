@@ -109,6 +109,14 @@ export const automationEligibility = Object.freeze({
 
 export const automationEligibilityValues = Object.freeze(Object.values(automationEligibility));
 
+export const knowledgeVisibility = Object.freeze({
+  internal: "internal",
+  agentOnly: "agent_only",
+  publicSafe: "public_safe"
+});
+
+export const knowledgeVisibilityValues = Object.freeze(Object.values(knowledgeVisibility));
+
 export const reviewReasons = Object.freeze({
   lowConfidence: "low_confidence",
   blockedCategory: "blocked_category",
