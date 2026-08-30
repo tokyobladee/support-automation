@@ -58,7 +58,14 @@ export async function buildApp(options = {}) {
   });
   const classificationService =
     options.classificationService ?? createDefaultClassificationService();
-  const knowledgeContext = options.knowledgeContext ?? (await buildSeededKnowledgeContext());
+  const knowledgeContext =
+    options.knowledgeContext ??
+    (await buildSeededKnowledgeContext({
+      embeddingProviderName: env.EMBEDDING_PROVIDER,
+      openAiApiKey: env.OPENAI_API_KEY,
+      openAiEmbeddingModel: env.OPENAI_EMBEDDING_MODEL,
+      embeddingDimensions: env.OPENAI_EMBEDDING_DIMENSIONS
+    }));
   const copilotService =
     options.copilotService ??
     createDefaultCopilotService({
