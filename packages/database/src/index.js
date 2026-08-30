@@ -1,13 +1,21 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "./generated/prisma/client.js";
+export {
+  FeedbackDraftNotFoundError,
+  PrismaAgentFeedbackRepository,
+  PrismaClassificationRepository,
+  PrismaCopilotRepository,
+  PrismaSupportContext,
+  createPrismaSupportRepositories
+} from "./prisma-support-repositories.js";
 
-export function createPrismaClient(options = {}) {
+export async function createPrismaClient(options = {}) {
   const { connectionString = process.env.DATABASE_URL, ...clientOptions } = options;
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is required to create Prisma client");
   }
 
+  const { PrismaClient } = await import("@prisma/client");
   const adapter = new PrismaPg({
     connectionString
   });

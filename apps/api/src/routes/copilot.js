@@ -1,4 +1,5 @@
 import { agentFeedbackInputSchema, copilotRequestSchema } from "@support/contracts";
+import { FeedbackDraftNotFoundError } from "@support/database";
 
 function toValidationIssues(error) {
   return error.issues.map((issue) => ({
@@ -48,7 +49,22 @@ export async function registerCopilotRoutes(app, options) {
       });
     }
 
-    const feedback = await feedbackRepository.saveFeedback(parsed.data);
+    let feedback;
+
+    try {
+      feedback = await feedbackRepository.saveFeedback(parsed.data);
+    } catch (error) {
+      if (error instanceof FeedbackDraftNotFoundError) {
+        return reply.code(404).send({
+          error: {
+            code: "DRAFT_NOT_FOUND",
+            message: "Copilot draft was not found"
+          }
+        });
+      }
+
+      throw error;
+    }
 
     return reply.code(201).send({
       data: feedback

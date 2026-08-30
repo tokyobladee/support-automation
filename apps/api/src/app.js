@@ -8,6 +8,7 @@ import {
   InMemoryCopilotRepository,
   TicketClassificationService
 } from "@support/ai";
+import { createPrismaClient, createPrismaSupportRepositories } from "@support/database";
 import { buildSeededKnowledgeContext } from "@support/retrieval";
 import { env } from "./env.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
@@ -28,36 +29,78 @@ const healthJsonSchema = {
   }
 };
 
-function createDefaultClassificationService() {
-  return new TicketClassificationService({
-    provider: createTicketClassifierProvider({
-      providerName: env.AI_PROVIDER,
-      openAiApiKey: env.OPENAI_API_KEY,
-      openAiModel: env.OPENAI_CLASSIFICATION_MODEL
-    }),
-    repository: new InMemoryClassificationRepository()
+function createAiProvider() {
+  return createTicketClassifierProvider({
+    providerName: env.AI_PROVIDER,
+    openAiApiKey: env.OPENAI_API_KEY,
+    openAiModel: env.OPENAI_CLASSIFICATION_MODEL
   });
 }
 
-function createDefaultCopilotService({ classificationService, knowledgeRetriever }) {
+function createDefaultClassificationService({ repository }) {
+  return new TicketClassificationService({
+    provider: createAiProvider(),
+    repository
+  });
+}
+
+function createDefaultCopilotService({ classificationService, knowledgeRetriever, repository }) {
   return new CopilotService({
     classificationService,
-    provider: createTicketClassifierProvider({
-      providerName: env.AI_PROVIDER,
-      openAiApiKey: env.OPENAI_API_KEY,
-      openAiModel: env.OPENAI_CLASSIFICATION_MODEL
-    }),
+    provider: createAiProvider(),
     knowledgeRetriever,
-    repository: new InMemoryCopilotRepository()
+    repository
   });
+}
+
+function createMemoryPersistence() {
+  return {
+    classificationRepository: new InMemoryClassificationRepository(),
+    copilotRepository: new InMemoryCopilotRepository(),
+    feedbackRepository: new InMemoryAgentFeedbackRepository()
+  };
+}
+
+async function createPrismaPersistence() {
+  const prisma = await createPrismaClient({
+    connectionString: env.DATABASE_URL
+  });
+
+  return {
+    prisma,
+    ...createPrismaSupportRepositories({
+      prisma,
+      organization: {
+        name: env.DEFAULT_ORGANIZATION_NAME,
+        slug: env.DEFAULT_ORGANIZATION_SLUG
+      },
+      agent: {
+        email: env.DEFAULT_AGENT_EMAIL,
+        name: env.DEFAULT_AGENT_NAME,
+        role: "agent"
+      }
+    })
+  };
+}
+
+async function createPersistence() {
+  if (env.PERSISTENCE_PROVIDER === "prisma") {
+    return await createPrismaPersistence();
+  }
+
+  return createMemoryPersistence();
 }
 
 export async function buildApp(options = {}) {
   const app = Fastify({
     logger: true
   });
+  const persistence = options.persistence ?? (await createPersistence());
   const classificationService =
-    options.classificationService ?? createDefaultClassificationService();
+    options.classificationService ??
+    createDefaultClassificationService({
+      repository: persistence.classificationRepository
+    });
   const knowledgeContext =
     options.knowledgeContext ??
     (await buildSeededKnowledgeContext({
@@ -70,10 +113,17 @@ export async function buildApp(options = {}) {
     options.copilotService ??
     createDefaultCopilotService({
       classificationService,
-      knowledgeRetriever: knowledgeContext.retriever
+      knowledgeRetriever: knowledgeContext.retriever,
+      repository: persistence.copilotRepository
     });
   const feedbackRepository =
-    options.feedbackRepository ?? new InMemoryAgentFeedbackRepository();
+    options.feedbackRepository ?? persistence.feedbackRepository;
+
+  if (persistence.prisma) {
+    app.addHook("onClose", async () => {
+      await persistence.prisma.$disconnect();
+    });
+  }
 
   await app.register(cors, {
     origin: true
