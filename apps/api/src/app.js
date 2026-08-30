@@ -5,8 +5,10 @@ import {
   InMemoryClassificationRepository,
   TicketClassificationService
 } from "@support/ai";
+import { buildSeededKnowledgeContext } from "@support/retrieval";
 import { env } from "./env.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
+import { registerKnowledgeRoutes } from "./routes/knowledge.js";
 
 const healthJsonSchema = {
   type: "object",
@@ -39,6 +41,7 @@ export async function buildApp(options = {}) {
   });
   const classificationService =
     options.classificationService ?? createDefaultClassificationService();
+  const knowledgeContext = options.knowledgeContext ?? (await buildSeededKnowledgeContext());
 
   await app.register(cors, {
     origin: true
@@ -57,6 +60,10 @@ export async function buildApp(options = {}) {
 
   await app.register(registerClassificationRoutes, {
     classificationService
+  });
+  await app.register(registerKnowledgeRoutes, {
+    knowledgeRepository: knowledgeContext.repository,
+    knowledgeRetriever: knowledgeContext.retriever
   });
 
   return app;

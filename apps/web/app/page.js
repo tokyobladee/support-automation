@@ -1,6 +1,6 @@
 import { createElement } from "react";
-import { TriageWorkspace } from "./triage-workspace.js";
+import { OperationsWorkspace } from "./operations-workspace.js";
 
 export default function HomePage() {
-  return createElement(TriageWorkspace);
+  return createElement(OperationsWorkspace);
 }

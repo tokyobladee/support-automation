@@ -106,165 +106,152 @@ export function TriageWorkspace() {
   }
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Support AI Copilot</p>
-          <h1>Ticket Triage</h1>
+    <section className="triage-layout">
+      <form className="panel ticket-panel" onSubmit={handleSubmit}>
+        <div className="panel-header">
+          <div>
+            <p className="section-label">Incoming Ticket</p>
+            <h2>Request Details</h2>
+          </div>
+          <select value={source} onChange={(event) => setSource(event.target.value)}>
+            <option value="manual">Manual</option>
+            <option value="api">API</option>
+            <option value="webhook">Webhook</option>
+            <option value="slack">Slack</option>
+            <option value="crm">CRM</option>
+          </select>
         </div>
-        <div className="system-status">
-          <span className="status-dot" />
-          Mock AI provider
+
+        <label className="field">
+          <span>Subject</span>
+          <input
+            value={subject}
+            onChange={(event) => setSubject(event.target.value)}
+            placeholder="Optional ticket subject"
+          />
+        </label>
+
+        <label className="field field-large">
+          <span>Ticket Text</span>
+          <textarea
+            value={ticketText}
+            onChange={(event) => setTicketText(event.target.value)}
+            placeholder="Paste customer message"
+          />
+        </label>
+
+        <div className="sample-row">
+          {sampleTickets.map((sample) => (
+            <button
+              className="sample-button"
+              key={sample.label}
+              type="button"
+              onClick={() => setTicketText(sample.text)}
+            >
+              {sample.label}
+            </button>
+          ))}
         </div>
-      </header>
 
-      <section className="triage-layout">
-        <form className="panel ticket-panel" onSubmit={handleSubmit}>
-          <div className="panel-header">
-            <div>
-              <p className="section-label">Incoming Ticket</p>
-              <h2>Request Details</h2>
-            </div>
-            <select value={source} onChange={(event) => setSource(event.target.value)}>
-              <option value="manual">Manual</option>
-              <option value="api">API</option>
-              <option value="webhook">Webhook</option>
-              <option value="slack">Slack</option>
-              <option value="crm">CRM</option>
-            </select>
+        {error ? <div className="error-banner">{error}</div> : null}
+
+        <button className="primary-button" disabled={!canSubmit} type="submit">
+          {isSubmitting ? "Classifying" : "Classify Ticket"}
+        </button>
+      </form>
+
+      <aside className="panel result-panel">
+        <div className="panel-header">
+          <div>
+            <p className="section-label">Classification</p>
+            <h2>Review</h2>
           </div>
-
-          <label className="field">
-            <span>Subject</span>
-            <input
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-              placeholder="Optional ticket subject"
-            />
-          </label>
-
-          <label className="field field-large">
-            <span>Ticket Text</span>
-            <textarea
-              value={ticketText}
-              onChange={(event) => setTicketText(event.target.value)}
-              placeholder="Paste customer message"
-            />
-          </label>
-
-          <div className="sample-row">
-            {sampleTickets.map((sample) => (
-              <button
-                className="sample-button"
-                key={sample.label}
-                type="button"
-                onClick={() => setTicketText(sample.text)}
-              >
-                {sample.label}
-              </button>
-            ))}
-          </div>
-
-          {error ? <div className="error-banner">{error}</div> : null}
-
-          <button className="primary-button" disabled={!canSubmit} type="submit">
-            {isSubmitting ? "Classifying" : "Classify Ticket"}
-          </button>
-        </form>
-
-        <aside className="panel result-panel">
-          <div className="panel-header">
-            <div>
-              <p className="section-label">Classification</p>
-              <h2>Review</h2>
-            </div>
-            {result ? (
-              <span className={eligibilityClass(result.data.automationEligibility)}>
-                {eligibilityLabels[result.data.automationEligibility]}
-              </span>
-            ) : null}
-          </div>
-
           {result ? (
-            <div className="result-stack">
-              <div className="metric-grid">
-                <div className="metric">
-                  <span>Category</span>
-                  <strong>{formatLabel(result.data.category)}</strong>
+            <span className={eligibilityClass(result.data.automationEligibility)}>
+              {eligibilityLabels[result.data.automationEligibility]}
+            </span>
+          ) : null}
+        </div>
+
+        {result ? (
+          <div className="result-stack">
+            <div className="metric-grid">
+              <div className="metric">
+                <span>Category</span>
+                <strong>{formatLabel(result.data.category)}</strong>
+              </div>
+              <div className="metric">
+                <span>Priority</span>
+                <strong>{formatLabel(result.data.priority)}</strong>
+              </div>
+              <div className="metric">
+                <span>Confidence</span>
+                <strong>{confidencePercent}%</strong>
+              </div>
+            </div>
+
+            <section className="result-block">
+              <h3>Next Step</h3>
+              <p>{result.data.recommendedNextStep}</p>
+            </section>
+
+            <section className="result-block">
+              <h3>Rationale</h3>
+              <p>{result.data.rationale}</p>
+            </section>
+
+            <section className="result-block review-decision">
+              <div className="decision-header">
+                <div>
+                  <h3>Automation Decision</h3>
+                  <p>{eligibilitySummaries[result.data.automationEligibility]}</p>
                 </div>
-                <div className="metric">
-                  <span>Priority</span>
-                  <strong>{formatLabel(result.data.priority)}</strong>
-                </div>
-                <div className="metric">
-                  <span>Confidence</span>
-                  <strong>{confidencePercent}%</strong>
-                </div>
+                <span className={eligibilityClass(result.data.automationEligibility)}>
+                  {eligibilityLabels[result.data.automationEligibility]}
+                </span>
               </div>
 
-              <section className="result-block">
-                <h3>Next Step</h3>
-                <p>{result.data.recommendedNextStep}</p>
-              </section>
+              <div className="decision-action">
+                <span>Agent action</span>
+                <strong>{eligibilityActions[result.data.automationEligibility]}</strong>
+              </div>
 
-              <section className="result-block">
-                <h3>Rationale</h3>
-                <p>{result.data.rationale}</p>
-              </section>
-
-              <section className="result-block review-decision">
-                <div className="decision-header">
-                  <div>
-                    <h3>Automation Decision</h3>
-                    <p>{eligibilitySummaries[result.data.automationEligibility]}</p>
-                  </div>
-                  <span className={eligibilityClass(result.data.automationEligibility)}>
-                    {eligibilityLabels[result.data.automationEligibility]}
-                  </span>
-                </div>
-
-                <div className="decision-action">
-                  <span>Agent action</span>
-                  <strong>{eligibilityActions[result.data.automationEligibility]}</strong>
-                </div>
-
-                <div className="reason-list" data-empty={!hasReviewReasons(result)}>
-                  {hasReviewReasons(result) ? (
-                    result.data.reviewReasons.map((reason) => (
-                      <div className="reason-item" key={reason}>
-                        <strong>{reviewReasonLabels[reason] ?? formatLabel(reason)}</strong>
-                        <span>{reason}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="reason-item reason-item-muted">
-                      <strong>No review flags</strong>
-                      <span>safe_to_suggest</span>
+              <div className="reason-list" data-empty={!hasReviewReasons(result)}>
+                {hasReviewReasons(result) ? (
+                  result.data.reviewReasons.map((reason) => (
+                    <div className="reason-item" key={reason}>
+                      <strong>{reviewReasonLabels[reason] ?? formatLabel(reason)}</strong>
+                      <span>{reason}</span>
                     </div>
-                  )}
-                </div>
-              </section>
+                  ))
+                ) : (
+                  <div className="reason-item reason-item-muted">
+                    <strong>No review flags</strong>
+                    <span>safe_to_suggest</span>
+                  </div>
+                )}
+              </div>
+            </section>
 
-              <section className="result-block">
-                <h3>Evidence</h3>
-                <div className="evidence-list">
-                  {result.data.evidence.map((item) => (
-                    <article className="evidence-item" key={`${item.quote}-${item.reason}`}>
-                      <blockquote>{item.quote}</blockquote>
-                      <p>{item.reason}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h2>No Classification</h2>
-              <p>No triage decision has been recorded for this session.</p>
-            </div>
-          )}
-        </aside>
-      </section>
-    </main>
+            <section className="result-block">
+              <h3>Evidence</h3>
+              <div className="evidence-list">
+                {result.data.evidence.map((item) => (
+                  <article className="evidence-item" key={`${item.quote}-${item.reason}`}>
+                    <blockquote>{item.quote}</blockquote>
+                    <p>{item.reason}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <h2>No Classification</h2>
+            <p>No triage decision has been recorded for this session.</p>
+          </div>
+        )}
+      </aside>
+    </section>
   );
 }

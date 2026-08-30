@@ -68,3 +68,56 @@ describe("classification route", () => {
     assert.equal(body.error.issues[0].path, "text");
   });
 });
+
+describe("knowledge routes", () => {
+  it("lists seeded knowledge documents", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/knowledge/documents"
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.ok(body.data.length >= 5);
+    assert.equal(body.data[0].chunkCount > 0, true);
+  });
+
+  it("searches seeded knowledge and returns citations", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/knowledge/search",
+      payload: {
+        query: "refund chargeback human review",
+        topK: 3
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.meta.query, "refund chargeback human review");
+    assert.equal(body.data.length > 0, true);
+    assert.equal(typeof body.data[0].quote, "string");
+  });
+
+  it("returns validation errors for invalid search requests", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/knowledge/search",
+      payload: {
+        query: "",
+        topK: 0
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.equal(body.error.issues[0].path, "query");
+  });
+});

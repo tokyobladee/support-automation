@@ -38,6 +38,9 @@ importers:
       '@support/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@support/retrieval':
+        specifier: workspace:*
+        version: link:../../packages/retrieval
       fastify:
         specifier: ^5.6.2
         version: 5.12.1

@@ -9,4 +9,5 @@ export { HybridKnowledgeRetriever } from "./hybrid-knowledge-retriever.js";
 export { InMemoryVectorIndex } from "./in-memory-vector-index.js";
 export { EmbeddingProvider, KnowledgeRetriever, VectorIndex } from "./ports.js";
 export { buildSeededKnowledgeRepository } from "./seeded-knowledge-repository.js";
+export { buildSeededKnowledgeContext } from "./seeded-knowledge-context.js";
 export { seedKnowledgeDocuments } from "./seed-knowledge-documents.js";
