@@ -1,6 +1,7 @@
 "use client";
 
 import { createElement, useState } from "react";
+import { CopilotWorkspace } from "./copilot-workspace.js";
 import { KnowledgeWorkspace } from "./knowledge-workspace.js";
 import { TriageWorkspace } from "./triage-workspace.js";
 
@@ -10,10 +11,26 @@ const views = [
     label: "Triage"
   },
   {
+    id: "copilot",
+    label: "Copilot"
+  },
+  {
     id: "knowledge",
     label: "Knowledge Base"
   }
 ];
+
+const viewTitles = {
+  triage: "Ticket Triage",
+  copilot: "Agent Copilot",
+  knowledge: "Knowledge Base"
+};
+
+const viewComponents = {
+  triage: TriageWorkspace,
+  copilot: CopilotWorkspace,
+  knowledge: KnowledgeWorkspace
+};
 
 export function OperationsWorkspace() {
   const [activeView, setActiveView] = useState("triage");
@@ -23,7 +40,7 @@ export function OperationsWorkspace() {
       <header className="topbar">
         <div>
           <p className="eyebrow">Support AI Copilot</p>
-          <h1>{activeView === "triage" ? "Ticket Triage" : "Knowledge Base"}</h1>
+          <h1>{viewTitles[activeView]}</h1>
         </div>
         <div className="topbar-actions">
           <div className="view-switcher">
@@ -45,7 +62,7 @@ export function OperationsWorkspace() {
         </div>
       </header>
 
-      {createElement(activeView === "triage" ? TriageWorkspace : KnowledgeWorkspace)}
+      {createElement(viewComponents[activeView])}
     </main>
   );
 }

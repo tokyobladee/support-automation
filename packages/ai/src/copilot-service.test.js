@@ -55,8 +55,10 @@ describe("CopilotService", () => {
       text: "I was charged twice and want a refund.",
       source: "manual"
     });
+    const tones = result.result.replyVariants.map((variant) => variant.tone);
 
     assert.equal(result.result.replyVariants.length, 3);
+    assert.deepEqual(tones, ["formal", "empathetic", "concise"]);
     assert.equal(result.result.citations.length > 0, true);
     assert.equal(result.result.replyVariants.every((variant) => variant.citationChunkIds.length > 0), true);
     assert.equal(repository.all().length, 1);
