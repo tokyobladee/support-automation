@@ -12,8 +12,9 @@ export class InMemoryVectorIndex extends VectorIndex {
     }
   }
 
-  async search({ embedding, topK = 5 }) {
+  async search({ embedding, topK = 5, language, tags = [] }) {
     return [...this.chunks.values()]
+      .filter((chunk) => matchesFilters({ chunk, language, tags }))
       .map((chunk) => ({
         chunk,
         score: cosineSimilarity(embedding, chunk.embedding ?? [])
@@ -22,6 +23,18 @@ export class InMemoryVectorIndex extends VectorIndex {
       .sort((first, second) => second.score - first.score)
       .slice(0, topK);
   }
+}
+
+function matchesFilters({ chunk, language, tags = [] }) {
+  if (language && chunk.document.language !== language) {
+    return false;
+  }
+
+  if (tags.length === 0) {
+    return true;
+  }
+
+  return tags.every((tag) => chunk.document.tags.includes(tag));
 }
 
 function cosineSimilarity(first, second) {

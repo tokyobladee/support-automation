@@ -18,7 +18,9 @@ export class HybridKnowledgeRetriever extends KnowledgeRetriever {
     ]);
     const vectorMatches = await this.vectorIndex.search({
       embedding,
-      topK: request.topK
+      topK: request.topK,
+      language: request.language,
+      tags: request.tags
     });
     const merged = new Map();
 

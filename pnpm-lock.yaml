@@ -108,6 +108,12 @@ importers:
       '@prisma/client':
         specifier: ^7.2.0
         version: 7.10.0(prisma@7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))
+      '@support/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@support/retrieval':
+        specifier: workspace:*
+        version: link:../retrieval
       pg:
         specifier: ^8.16.3
         version: 8.23.0

@@ -9,9 +9,20 @@ import {
   InMemoryCopilotRepository,
   TicketClassificationService
 } from "@support/ai";
-import { createPrismaClient, createPrismaSupportRepositories } from "@support/database";
+import {
+  createPrismaClient,
+  createPrismaKnowledgeStores,
+  createPrismaSupportRepositories
+} from "@support/database";
 import { InMemoryMetricsRecorder } from "@support/observability";
-import { buildSeededKnowledgeContext } from "@support/retrieval";
+import {
+  buildSeededKnowledgeContext,
+  createEmbeddingProvider,
+  HybridKnowledgeRetriever,
+  KnowledgeDocumentIngestor,
+  KnowledgeEmbeddingIngestor,
+  seedKnowledgeDocuments
+} from "@support/retrieval";
 import { createAuthContext } from "./auth.js";
 import { env } from "./env.js";
 import { registerAuditRoutes } from "./routes/audit.js";
@@ -97,6 +108,56 @@ async function createPersistence() {
   return createMemoryPersistence();
 }
 
+async function createKnowledgeContext({ persistence }) {
+  const embeddingDimensions =
+    env.OPENAI_EMBEDDING_DIMENSIONS ?? (persistence.prisma ? 1536 : undefined);
+
+  if (!persistence.prisma) {
+    return await buildSeededKnowledgeContext({
+      embeddingProviderName: env.EMBEDDING_PROVIDER,
+      openAiApiKey: env.OPENAI_API_KEY,
+      openAiEmbeddingModel: env.OPENAI_EMBEDDING_MODEL,
+      embeddingDimensions
+    });
+  }
+
+  const embeddingProvider = createEmbeddingProvider({
+    providerName: env.EMBEDDING_PROVIDER,
+    openAiApiKey: env.OPENAI_API_KEY,
+    openAiModel: env.OPENAI_EMBEDDING_MODEL,
+    dimensions: embeddingDimensions
+  });
+  const { knowledgeRepository, keywordRetriever, vectorIndex } = createPrismaKnowledgeStores({
+    prisma: persistence.prisma,
+    organization: {
+      name: env.DEFAULT_ORGANIZATION_NAME,
+      slug: env.DEFAULT_ORGANIZATION_SLUG
+    },
+    embeddingDimensions
+  });
+  const documentIngestor = new KnowledgeDocumentIngestor({
+    repository: knowledgeRepository
+  });
+  const embeddingIngestor = new KnowledgeEmbeddingIngestor({
+    embeddingProvider,
+    vectorIndex
+  });
+
+  for (const documentInput of seedKnowledgeDocuments) {
+    const document = await documentIngestor.ingest(documentInput);
+    await embeddingIngestor.indexDocument(document);
+  }
+
+  return {
+    repository: knowledgeRepository,
+    retriever: new HybridKnowledgeRetriever({
+      keywordRetriever,
+      embeddingProvider,
+      vectorIndex
+    })
+  };
+}
+
 export async function buildApp(options = {}) {
   const app = Fastify({
     logger: true
@@ -123,11 +184,8 @@ export async function buildApp(options = {}) {
     });
   const knowledgeContext =
     options.knowledgeContext ??
-    (await buildSeededKnowledgeContext({
-      embeddingProviderName: env.EMBEDDING_PROVIDER,
-      openAiApiKey: env.OPENAI_API_KEY,
-      openAiEmbeddingModel: env.OPENAI_EMBEDDING_MODEL,
-      embeddingDimensions: env.OPENAI_EMBEDDING_DIMENSIONS
+    (await createKnowledgeContext({
+      persistence
     }));
   const copilotService =
     options.copilotService ??

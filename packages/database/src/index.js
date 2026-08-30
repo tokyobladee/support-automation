@@ -1,5 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 export {
+  PrismaKnowledgeRepository,
+  PrismaKeywordKnowledgeRetriever,
+  PrismaPgVectorIndex,
+  createPrismaKnowledgeStores
+} from "./prisma-knowledge-repositories.js";
+export {
   FeedbackDraftNotFoundError,
   PrismaAgentFeedbackRepository,
   PrismaClassificationRepository,
