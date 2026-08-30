@@ -20,8 +20,23 @@ const sampleTickets = [
 
 const eligibilityLabels = {
   safe_to_suggest: "Safe to suggest",
-  human_review_required: "Human review",
-  automation_blocked: "Blocked"
+  human_review_required: "Human review required",
+  automation_blocked: "Automation blocked"
+};
+
+const eligibilitySummaries = {
+  safe_to_suggest:
+    "AI output may be used as an agent suggestion. A human still reviews the final customer response.",
+  human_review_required:
+    "AI can assist, but an agent must review the context and make the next operational decision.",
+  automation_blocked:
+    "Automation must stop here. Route this case to a human owner before any policy or account action."
+};
+
+const eligibilityActions = {
+  safe_to_suggest: "Use the recommendation as a draft and confirm before sending.",
+  human_review_required: "Review the flagged reasons, inspect the ticket context, then accept or escalate.",
+  automation_blocked: "Escalate to the responsible support queue and do not perform automated actions."
 };
 
 const reviewReasonLabels = {
@@ -47,6 +62,10 @@ function formatLabel(value) {
 
 function eligibilityClass(value) {
   return `status-pill status-${value.replaceAll("_", "-")}`;
+}
+
+function hasReviewReasons(result) {
+  return result.data.reviewReasons.length > 0;
 }
 
 export function TriageWorkspace() {
@@ -193,17 +212,35 @@ export function TriageWorkspace() {
                 <p>{result.data.rationale}</p>
               </section>
 
-              <section className="result-block">
-                <h3>Review Reasons</h3>
-                <div className="chip-row">
-                  {result.data.reviewReasons.length > 0 ? (
+              <section className="result-block review-decision">
+                <div className="decision-header">
+                  <div>
+                    <h3>Automation Decision</h3>
+                    <p>{eligibilitySummaries[result.data.automationEligibility]}</p>
+                  </div>
+                  <span className={eligibilityClass(result.data.automationEligibility)}>
+                    {eligibilityLabels[result.data.automationEligibility]}
+                  </span>
+                </div>
+
+                <div className="decision-action">
+                  <span>Agent action</span>
+                  <strong>{eligibilityActions[result.data.automationEligibility]}</strong>
+                </div>
+
+                <div className="reason-list" data-empty={!hasReviewReasons(result)}>
+                  {hasReviewReasons(result) ? (
                     result.data.reviewReasons.map((reason) => (
-                      <span className="reason-chip" key={reason}>
-                        {reviewReasonLabels[reason] ?? formatLabel(reason)}
-                      </span>
+                      <div className="reason-item" key={reason}>
+                        <strong>{reviewReasonLabels[reason] ?? formatLabel(reason)}</strong>
+                        <span>{reason}</span>
+                      </div>
                     ))
                   ) : (
-                    <span className="reason-chip reason-chip-muted">None</span>
+                    <div className="reason-item reason-item-muted">
+                      <strong>No review flags</strong>
+                      <span>safe_to_suggest</span>
+                    </div>
                   )}
                 </div>
               </section>
