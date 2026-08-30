@@ -20,4 +20,8 @@ export class InMemoryKnowledgeRepository {
       }))
     );
   }
+
+  async listChunkRecords() {
+    return [...this.documents.values()].flatMap((document) => document.chunks);
+  }
 }
