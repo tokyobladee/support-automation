@@ -109,6 +109,9 @@ importers:
 
   packages/testing:
     dependencies:
+      '@support/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@support/domain':
         specifier: workspace:*
         version: link:../domain

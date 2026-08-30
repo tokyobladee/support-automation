@@ -35,6 +35,9 @@ export async function evaluateClassifier({ service, cases }) {
 function summarizeResults(results) {
   const passedCount = results.filter((result) => result.passed).length;
   const invalidOutputCount = results.filter((result) => result.invalidOutput).length;
+  const categoryMatches = results.filter((result) => result.categoryMatched).length;
+  const priorityMatches = results.filter((result) => result.priorityMatched).length;
+  const eligibilityMatches = results.filter((result) => result.eligibilityMatched).length;
   const blockedCases = results.filter(
     (result) => result.expected?.automationEligibility === "automation_blocked"
   );
@@ -45,7 +48,11 @@ function summarizeResults(results) {
     passed: passedCount,
     failed: results.length - passedCount,
     accuracy: results.length === 0 ? 0 : passedCount / results.length,
+    categoryAccuracy: results.length === 0 ? 0 : categoryMatches / results.length,
+    priorityAccuracy: results.length === 0 ? 0 : priorityMatches / results.length,
+    automationEligibilityAccuracy: results.length === 0 ? 0 : eligibilityMatches / results.length,
     invalidOutputCount,
+    invalidSchemaRate: results.length === 0 ? 0 : invalidOutputCount / results.length,
     blockedAutomationAccuracy:
       blockedCases.length === 0 ? 0 : blockedMatches / blockedCases.length,
     results

@@ -16,6 +16,7 @@
     "format:write": "prettier --write .",
     "test": "pnpm -r --if-present test",
     "schema:check": "pnpm -r --if-present schema:check",
+    "eval:classification": "pnpm --filter @support/testing eval:classification",
     "db:generate": "pnpm --filter @support/database db:generate",
     "db:migrate": "pnpm --filter @support/database db:migrate",
     "db:studio": "pnpm --filter @support/database db:studio",

@@ -4,7 +4,15 @@ const keywordRules = [
   {
     category: ticketCategories.refundRequest,
     priority: priorityLevels.high,
-    keywords: ["refund", "money back", "chargeback", "повернення", "поверните", "компенсац"],
+    keywords: [
+      "refund",
+      "money back",
+      "chargeback",
+      "повернення",
+      "поверните",
+      "верните",
+      "компенсац"
+    ],
     reviewReasons: [reviewReasons.financialDecision]
   },
   {
@@ -31,7 +39,7 @@ const keywordRules = [
   {
     category: ticketCategories.expertComplaint,
     priority: priorityLevels.high,
-    keywords: ["expert", "rude", "wrong advice", "complaint", "експерт", "эксперт", "грубо"],
+    keywords: ["rude", "wrong advice", "complaint", "ruined", "грубо"],
     reviewReasons: [reviewReasons.policySensitiveCategory]
   },
   {
@@ -70,6 +78,16 @@ const billingFlowCategories = new Set([
   ticketCategories.subscription
 ]);
 
+const billingGuidanceCategories = new Set([
+  ticketCategories.billing,
+  ticketCategories.productGuidance
+]);
+
+const subscriptionGuidanceCategories = new Set([
+  ticketCategories.subscription,
+  ticketCategories.productGuidance
+]);
+
 export class MockTicketClassifierProvider {
   constructor() {
     this.name = "mock";
@@ -91,6 +109,38 @@ export class MockTicketClassifierProvider {
         confidence: 0.82,
         recommendedNextStep: this.nextStepFor(match.category),
         rationale: `The ticket contains related billing-flow signals and maps to ${match.category}.`,
+        reviewReasons: match.reviewReasons,
+        quote: request.text.slice(0, 180)
+      });
+    }
+
+    if (matches.length > 1 && matches.every((match) => billingGuidanceCategories.has(match.category))) {
+      const match = matches.find((item) => item.category === ticketCategories.billing);
+
+      return this.buildResult({
+        category: match.category,
+        priority: match.priority,
+        confidence: 0.84,
+        recommendedNextStep: this.nextStepFor(match.category),
+        rationale: "The ticket asks for billing guidance about an invoice or payment record.",
+        reviewReasons: match.reviewReasons,
+        quote: request.text.slice(0, 180)
+      });
+    }
+
+    if (
+      matches.length > 1 &&
+      matches.every((match) => subscriptionGuidanceCategories.has(match.category)) &&
+      !text.includes("upgrade")
+    ) {
+      const match = matches.find((item) => item.category === ticketCategories.productGuidance);
+
+      return this.buildResult({
+        category: match.category,
+        priority: match.priority,
+        confidence: 0.81,
+        recommendedNextStep: this.nextStepFor(match.category),
+        rationale: "The ticket asks how to change a plan rather than requesting a subscription action.",
         reviewReasons: match.reviewReasons,
         quote: request.text.slice(0, 180)
       });
