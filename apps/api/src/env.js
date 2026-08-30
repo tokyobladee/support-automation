@@ -4,6 +4,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   API_HOST: z.string().min(1).default("0.0.0.0"),
   API_PORT: z.coerce.number().int().positive().default(4000),
+  AI_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
+  OPENAI_CLASSIFICATION_MODEL: z.string().min(1).default("gpt-5.6"),
   DATABASE_URL: z
     .string()
     .min(1)

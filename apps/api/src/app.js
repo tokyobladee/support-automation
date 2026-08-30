@@ -1,10 +1,11 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import {
+  createTicketClassifierProvider,
   InMemoryClassificationRepository,
-  MockTicketClassifierProvider,
   TicketClassificationService
 } from "@support/ai";
+import { env } from "./env.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
 
 const healthJsonSchema = {
@@ -23,7 +24,11 @@ const healthJsonSchema = {
 
 function createDefaultClassificationService() {
   return new TicketClassificationService({
-    provider: new MockTicketClassifierProvider(),
+    provider: createTicketClassifierProvider({
+      providerName: env.AI_PROVIDER,
+      openAiApiKey: env.OPENAI_API_KEY,
+      openAiModel: env.OPENAI_CLASSIFICATION_MODEL
+    }),
     repository: new InMemoryClassificationRepository()
   });
 }
