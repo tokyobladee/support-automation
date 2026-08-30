@@ -1,4 +1,5 @@
 import { classificationRequestSchema } from "@support/contracts";
+import { recordAiRunAuditEvent } from "../audit.js";
 import { recordAiRunMetrics, recordValidationErrorMetrics } from "../metrics.js";
 
 function toValidationIssues(error) {
@@ -10,6 +11,7 @@ function toValidationIssues(error) {
 
 export async function registerClassificationRoutes(app, options) {
   const classificationService = options.classificationService;
+  const auditLog = options.auditLog;
   const metricsRecorder = options.metricsRecorder;
 
   app.post("/v1/classifications", async (request, reply) => {
@@ -31,6 +33,7 @@ export async function registerClassificationRoutes(app, options) {
     }
 
     const result = await classificationService.classify(parsed.data);
+    await recordAiRunAuditEvent(auditLog, result.aiRun);
     recordAiRunMetrics(metricsRecorder, result.aiRun);
 
     return reply.code(201).send({

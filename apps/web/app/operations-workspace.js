@@ -1,6 +1,7 @@
 "use client";
 
 import { createElement, useState } from "react";
+import { AuditWorkspace } from "./audit-workspace.js";
 import { CopilotWorkspace } from "./copilot-workspace.js";
 import { KnowledgeWorkspace } from "./knowledge-workspace.js";
 import { TriageWorkspace } from "./triage-workspace.js";
@@ -17,19 +18,25 @@ const views = [
   {
     id: "knowledge",
     label: "Knowledge Base"
+  },
+  {
+    id: "audit",
+    label: "Audit Log"
   }
 ];
 
 const viewTitles = {
   triage: "Ticket Triage",
   copilot: "Agent Copilot",
-  knowledge: "Knowledge Base"
+  knowledge: "Knowledge Base",
+  audit: "Audit Log"
 };
 
 const viewComponents = {
   triage: TriageWorkspace,
   copilot: CopilotWorkspace,
-  knowledge: KnowledgeWorkspace
+  knowledge: KnowledgeWorkspace,
+  audit: AuditWorkspace
 };
 
 export function OperationsWorkspace() {

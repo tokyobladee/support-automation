@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.2.1",
+    "@support/audit": "workspace:*",
     "@support/ai": "workspace:*",
     "@support/contracts": "workspace:*",
     "@support/database": "workspace:*",

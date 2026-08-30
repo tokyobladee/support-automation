@@ -32,6 +32,9 @@ importers:
       '@support/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@support/audit':
+        specifier: workspace:*
+        version: link:../../packages/audit
       '@support/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -80,6 +83,8 @@ importers:
       '@support/domain':
         specifier: workspace:*
         version: link:../domain
+
+  packages/audit: {}
 
   packages/contracts:
     dependencies:

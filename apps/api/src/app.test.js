@@ -266,3 +266,70 @@ describe("metrics route", () => {
     assert.equal(body.data.decisions.escalationCount, 1);
   });
 });
+
+describe("audit route", () => {
+  it("lists AI run and human decision audit events", async () => {
+    app = await buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/classifications",
+      payload: {
+        text: "I want a refund because I was charged twice.",
+        source: "manual"
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/copilot/feedback",
+      payload: {
+        draftId: "draft-1",
+        decision: "marked_bad_output",
+        reason: "The answer overpromised."
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/audit/events"
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.data.length, 2);
+    assert.equal(body.data[0].type, "human_decision_recorded");
+    assert.equal(body.data[1].type, "ai_run_completed");
+    assert.equal(body.data[1].payload.purpose, "ticket_classification");
+  });
+
+  it("filters audit events by type", async () => {
+    app = await buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/classifications",
+      payload: {
+        text: "I want a refund because I was charged twice.",
+        source: "manual"
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/copilot/feedback",
+      payload: {
+        draftId: "draft-1",
+        decision: "escalated"
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/audit/events?type=ai_run_completed&limit=1"
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.data.length, 1);
+    assert.equal(body.data[0].type, "ai_run_completed");
+  });
+});

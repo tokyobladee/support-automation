@@ -1,0 +1,15 @@
+{
+  "name": "@support/audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "build": "node --check src/index.js",
+    "lint": "eslint .",
+    "test": "node --test",
+    "schema:check": "node src/index.js"
+  }
+}

@@ -97,6 +97,27 @@ export async function submitAgentFeedback(payload) {
   return body;
 }
 
+export async function listAuditEvents(filters = {}) {
+  const url = new URL(`${apiBaseUrl}/v1/audit/events`);
+
+  if (filters.type) {
+    url.searchParams.set("type", filters.type);
+  }
+
+  if (filters.limit) {
+    url.searchParams.set("limit", filters.limit);
+  }
+
+  const response = await fetch(url);
+  const body = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(body.error?.message ?? "Audit events request failed");
+  }
+
+  return body;
+}
+
 async function parseJsonResponse(response) {
   try {
     return await response.json();

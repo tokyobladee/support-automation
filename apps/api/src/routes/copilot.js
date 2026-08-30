@@ -1,5 +1,6 @@
 import { agentFeedbackInputSchema, copilotRequestSchema } from "@support/contracts";
 import { FeedbackDraftNotFoundError } from "@support/database";
+import { recordAiRunAuditEvent, recordHumanDecisionAuditEvent } from "../audit.js";
 import {
   recordAiRunMetrics,
   recordHumanDecisionMetrics,
@@ -16,6 +17,7 @@ function toValidationIssues(error) {
 export async function registerCopilotRoutes(app, options) {
   const copilotService = options.copilotService;
   const feedbackRepository = options.feedbackRepository;
+  const auditLog = options.auditLog;
   const metricsRecorder = options.metricsRecorder;
 
   app.post("/v1/copilot/drafts", async (request, reply) => {
@@ -37,6 +39,7 @@ export async function registerCopilotRoutes(app, options) {
     }
 
     const draft = await copilotService.draftReply(parsed.data);
+    await recordAiRunAuditEvent(auditLog, draft.aiRun);
     recordAiRunMetrics(metricsRecorder, draft.aiRun);
 
     return reply.code(201).send({
@@ -83,6 +86,7 @@ export async function registerCopilotRoutes(app, options) {
       throw error;
     }
 
+    await recordHumanDecisionAuditEvent(auditLog, feedback);
     recordHumanDecisionMetrics(metricsRecorder, feedback);
 
     return reply.code(201).send({
