@@ -358,6 +358,7 @@ export function createPrismaSupportRepositories({
 function toAiRunMetadata(record) {
   return {
     promptVersion: record.aiRun.promptVersion,
+    prompt: record.aiRun.prompt,
     startedAt: record.aiRun.startedAt.toISOString(),
     finishedAt: record.aiRun.finishedAt.toISOString(),
     source: record.request.source,

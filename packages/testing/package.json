@@ -8,13 +8,15 @@
   },
   "scripts": {
     "build": "node --check src/index.js",
+    "eval": "node src/run-evals.js",
     "eval:classification": "node src/run-classification-eval.js",
     "lint": "eslint .",
     "test": "node --test",
-    "schema:check": "node src/index.js && node --check src/run-classification-eval.js"
+    "schema:check": "node src/index.js && node --check src/run-classification-eval.js && node --check src/run-evals.js"
   },
   "dependencies": {
     "@support/ai": "workspace:*",
-    "@support/domain": "workspace:*"
+    "@support/domain": "workspace:*",
+    "@support/retrieval": "workspace:*"
   }
 }

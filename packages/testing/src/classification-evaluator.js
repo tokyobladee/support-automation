@@ -17,7 +17,8 @@ export async function evaluateClassifier({ service, cases }) {
         priorityMatched,
         eligibilityMatched,
         expected: caseItem.expected,
-        actual
+        actual,
+        aiRun: output.aiRun
       });
     } catch (error) {
       results.push({

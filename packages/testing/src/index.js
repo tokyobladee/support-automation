@@ -1,4 +1,5 @@
 import { automationEligibility, priorityLevels, ticketCategories } from "@support/domain";
+export { evaluateCopilot } from "./copilot-evaluator.js";
 export { evaluateClassifier } from "./classification-evaluator.js";
 
 export const syntheticTicketSeeds = Object.freeze([
@@ -294,4 +295,73 @@ export const syntheticTicketSummary = Object.freeze({
   total: syntheticTicketSeeds.length,
   languages: ["english", "ukrainian", "russian", "spanish"],
   edgeCases: ["aggressive", "mixed", "ambiguous", "privacy", "financial", "non_english"]
+});
+
+export const copilotEvaluationSeeds = Object.freeze([
+  {
+    id: "copilot-refund-policy",
+    input: {
+      text: "I was charged after cancellation and want a refund.",
+      source: "manual",
+      subject: "Refund after cancellation"
+    },
+    expected: {
+      tones: ["formal", "empathetic", "concise"],
+      requiresCitation: true,
+      automationEligibility: automationEligibility.automationBlocked,
+      reviewReasons: ["financial_decision"]
+    },
+    tags: ["refund", "financial", "human_judgment"]
+  },
+  {
+    id: "copilot-bug-intake",
+    input: {
+      text: "The app crashes when I upload a file into expert chat.",
+      source: "webhook",
+      subject: "Crash on file upload"
+    },
+    expected: {
+      tones: ["formal", "empathetic", "concise"],
+      requiresCitation: true,
+      automationEligibility: automationEligibility.humanReviewRequired,
+      reviewReasons: ["policy_sensitive_category"]
+    },
+    tags: ["bug", "technical_review"]
+  },
+  {
+    id: "copilot-expert-complaint",
+    input: {
+      text: "The expert was rude and gave wrong advice about my case.",
+      source: "crm",
+      subject: "Expert complaint"
+    },
+    expected: {
+      tones: ["formal", "empathetic", "concise"],
+      requiresCitation: true,
+      automationEligibility: automationEligibility.humanReviewRequired,
+      reviewReasons: ["policy_sensitive_category"]
+    },
+    tags: ["expert_complaint", "quality_review"]
+  },
+  {
+    id: "copilot-product-guidance",
+    input: {
+      text: "How do I invite another teammate to the workspace?",
+      source: "manual",
+      subject: "Invite teammate"
+    },
+    expected: {
+      tones: ["formal", "empathetic", "concise"],
+      requiresCitation: true,
+      automationEligibility: automationEligibility.safeToSuggest,
+      reviewReasons: []
+    },
+    tags: ["guidance", "safe_to_suggest"]
+  }
+]);
+
+export const copilotEvaluationSummary = Object.freeze({
+  total: copilotEvaluationSeeds.length,
+  requiredTones: ["formal", "empathetic", "concise"],
+  edgeCases: ["financial", "technical_review", "quality_review", "safe_to_suggest"]
 });

@@ -1,5 +1,6 @@
 import { classificationRequestSchema, classificationResponseSchema } from "@support/contracts";
 import { resolveAutomationPolicy } from "@support/domain";
+import { describePromptRun } from "./prompt-registry.js";
 import { buildTicketClassificationPrompt } from "./ticket-classification-prompt.js";
 
 export class TicketClassificationService {
@@ -34,6 +35,11 @@ export class TicketClassificationService {
         provider: this.provider.name,
         model: this.provider.model,
         promptVersion: prompt.version,
+        prompt: describePromptRun({
+          prompt,
+          providerName: this.provider.name,
+          model: this.provider.model
+        }),
         startedAt,
         finishedAt: this.clock()
       }

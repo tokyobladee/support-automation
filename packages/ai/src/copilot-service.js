@@ -1,6 +1,7 @@
 import { copilotDraftResponseSchema, copilotRequestSchema, copilotResponseSchema } from "@support/contracts";
 import { resolveAutomationPolicy, reviewReasons } from "@support/domain";
 import { buildCopilotPrompt } from "./copilot-prompt.js";
+import { describePromptRun } from "./prompt-registry.js";
 
 export class CopilotService {
   constructor({
@@ -72,6 +73,11 @@ export class CopilotService {
         provider: this.provider.name,
         model: this.provider.model,
         promptVersion: prompt.version,
+        prompt: describePromptRun({
+          prompt,
+          providerName: this.provider.name,
+          model: this.provider.model
+        }),
         startedAt,
         finishedAt: this.clock()
       }

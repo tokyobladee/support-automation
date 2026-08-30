@@ -6,6 +6,13 @@ export {
 } from "./ports.js";
 export { buildTicketClassificationPrompt } from "./ticket-classification-prompt.js";
 export { buildCopilotPrompt } from "./copilot-prompt.js";
+export {
+  describePromptRun,
+  getPromptRegistration,
+  hashPromptMessages,
+  promptPurposes,
+  promptRegistry
+} from "./prompt-registry.js";
 export { TicketClassificationService } from "./ticket-classification-service.js";
 export { CopilotService } from "./copilot-service.js";
 export { MockTicketClassifierProvider } from "./mock-ticket-classifier-provider.js";
