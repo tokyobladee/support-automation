@@ -9,6 +9,7 @@ services:
       API_PORT: 4000
       PERSISTENCE_PROVIDER: prisma
       AUTH_MODE: headers
+      TRACING_PROVIDER: opentelemetry
       AI_PROVIDER: openai
       EMBEDDING_PROVIDER: openai
       OPENAI_CLASSIFICATION_MODEL: ${OPENAI_CLASSIFICATION_MODEL:-gpt-5.6}

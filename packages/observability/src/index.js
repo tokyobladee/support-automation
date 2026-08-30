@@ -1,3 +1,5 @@
+import { SpanStatusCode, trace } from "@opentelemetry/api";
+
 export class MetricsRecorder {
   recordAiRun(_event) {
     throw new Error("MetricsRecorder.recordAiRun must be implemented");
@@ -18,6 +20,141 @@ export class MetricsRecorder {
   snapshot() {
     throw new Error("MetricsRecorder.snapshot must be implemented");
   }
+}
+
+export class TraceRecorder {
+  async trace(_name, _options, _operation) {
+    throw new Error("TraceRecorder.trace must be implemented");
+  }
+
+  startSpan(_name, _options) {
+    throw new Error("TraceRecorder.startSpan must be implemented");
+  }
+}
+
+export class OpenTelemetryTraceRecorder extends TraceRecorder {
+  constructor({ tracer = trace.getTracer("support-ai-copilot") } = {}) {
+    super();
+    this.tracer = tracer;
+  }
+
+  async trace(name, options, operation) {
+    return await this.tracer.startActiveSpan(name, toSpanOptions(options), async (span) => {
+      try {
+        const result = await operation(span);
+
+        span.setStatus({
+          code: SpanStatusCode.OK
+        });
+
+        return result;
+      } catch (error) {
+        recordSpanError({ span, error });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
+  }
+
+  startSpan(name, options = {}) {
+    const span = this.tracer.startSpan(name, toSpanOptions(options));
+
+    return {
+      setAttribute(key, value) {
+        if (isTraceAttributeValue(value)) {
+          span.setAttribute(key, value);
+        }
+      },
+      end(error) {
+        if (error) {
+          recordSpanError({ span, error });
+        } else {
+          span.setStatus({
+            code: SpanStatusCode.OK
+          });
+        }
+
+        span.end();
+      }
+    };
+  }
+}
+
+export class InMemoryTraceRecorder extends TraceRecorder {
+  constructor() {
+    super();
+    this.spans = [];
+  }
+
+  async trace(name, options, operation) {
+    const span = this.startSpan(name, options);
+
+    try {
+      const result = await operation(span);
+
+      span.end();
+
+      return result;
+    } catch (error) {
+      span.end(error);
+      throw error;
+    }
+  }
+
+  startSpan(name, options = {}) {
+    const record = {
+      name,
+      attributes: sanitizeAttributes(options.attributes ?? {}),
+      status: "started"
+    };
+
+    this.spans.push(record);
+
+    return {
+      setAttribute(key, value) {
+        if (isTraceAttributeValue(value)) {
+          record.attributes[key] = value;
+        }
+      },
+      end(error) {
+        record.status = error ? "error" : "ok";
+        record.errorName = error?.name;
+        record.errorMessage = error?.message;
+      }
+    };
+  }
+
+  snapshot() {
+    return this.spans.map((span) => ({
+      ...span,
+      attributes: {
+        ...span.attributes
+      }
+    }));
+  }
+}
+
+export function createNoopTraceRecorder() {
+  return new NoopTraceRecorder();
+}
+
+export function instrumentMethods({ target, traceRecorder, spans }) {
+  return new Proxy(target, {
+    get(currentTarget, property, receiver) {
+      const value = Reflect.get(currentTarget, property, receiver);
+      const spanConfig = spans[property];
+
+      if (!spanConfig || typeof value !== "function") {
+        return value;
+      }
+
+      return async (...args) =>
+        await traceRecorder.trace(spanConfig.name, spanConfig.options(args), async () =>
+          await value.apply(currentTarget, args)
+        );
+    }
+  });
 }
 
 export class InMemoryMetricsRecorder extends MetricsRecorder {
@@ -70,6 +207,19 @@ export class InMemoryMetricsRecorder extends MetricsRecorder {
 
 export function createNoopMetricsRecorder() {
   return new NoopMetricsRecorder();
+}
+
+class NoopTraceRecorder extends TraceRecorder {
+  async trace(_name, _options, operation) {
+    return await operation();
+  }
+
+  startSpan() {
+    return {
+      setAttribute() {},
+      end() {}
+    };
+  }
 }
 
 class NoopMetricsRecorder extends MetricsRecorder {
@@ -167,4 +317,37 @@ function average(values) {
 
 function sum(values) {
   return values.reduce((total, value) => total + value, 0);
+}
+
+function toSpanOptions(options = {}) {
+  return {
+    attributes: sanitizeAttributes(options.attributes ?? {})
+  };
+}
+
+function sanitizeAttributes(attributes) {
+  return Object.fromEntries(
+    Object.entries(attributes).filter(([, value]) => isTraceAttributeValue(value))
+  );
+}
+
+function isTraceAttributeValue(value) {
+  return (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    (Array.isArray(value) &&
+      value.every(
+        (item) =>
+          typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+      ))
+  );
+}
+
+function recordSpanError({ span, error }) {
+  span.recordException(error);
+  span.setStatus({
+    code: SpanStatusCode.ERROR,
+    message: error.message
+  });
 }

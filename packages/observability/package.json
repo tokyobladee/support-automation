@@ -11,5 +11,8 @@
     "lint": "eslint .",
     "test": "node --test",
     "schema:check": "node src/index.js"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0"
   }
 }

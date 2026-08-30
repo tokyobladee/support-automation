@@ -16,6 +16,7 @@ const envSchema = z.object({
   DEFAULT_AGENT_NAME: z.string().min(1).default("Support Agent"),
   DEFAULT_AGENT_ROLE: z.enum(["agent", "lead", "admin"]).default("admin"),
   AUTH_MODE: z.enum(["disabled", "headers"]).default("disabled"),
+  TRACING_PROVIDER: z.enum(["none", "opentelemetry"]).default("none"),
   AI_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
   OPENAI_CLASSIFICATION_MODEL: z.string().min(1).default("gpt-5.6"),
   EMBEDDING_PROVIDER: z.enum(["hash", "openai"]).default("hash"),
@@ -62,6 +63,14 @@ const envSchema = z.object({
       code: "custom",
       path: ["EMBEDDING_PROVIDER"],
       message: "EMBEDDING_PROVIDER must be openai in production"
+    });
+  }
+
+  if (value.TRACING_PROVIDER !== "opentelemetry") {
+    context.addIssue({
+      code: "custom",
+      path: ["TRACING_PROVIDER"],
+      message: "TRACING_PROVIDER must be opentelemetry in production"
     });
   }
 

@@ -17,6 +17,7 @@ describe("API environment validation", () => {
         parseEnv({
           NODE_ENV: "production",
           AUTH_MODE: "disabled",
+          TRACING_PROVIDER: "none",
           PERSISTENCE_PROVIDER: "memory",
           AI_PROVIDER: "mock",
           EMBEDDING_PROVIDER: "hash"
@@ -29,6 +30,7 @@ describe("API environment validation", () => {
     const env = parseEnv({
       NODE_ENV: "production",
       AUTH_MODE: "headers",
+      TRACING_PROVIDER: "opentelemetry",
       PERSISTENCE_PROVIDER: "prisma",
       AI_PROVIDER: "openai",
       EMBEDDING_PROVIDER: "openai",

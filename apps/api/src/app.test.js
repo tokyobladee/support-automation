@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { InMemoryAgentFeedbackRepository } from "@support/ai";
+import { InMemoryTraceRecorder } from "@support/observability";
 import { createAuthContext } from "./auth.js";
 import { buildApp } from "./app.js";
 
@@ -362,6 +363,49 @@ describe("metrics route", () => {
     assert.equal(body.data.retrieval.hitRate, 1);
     assert.equal(body.data.schemas.totalErrors, 1);
     assert.equal(body.data.decisions.escalationCount, 1);
+  });
+});
+
+describe("tracing", () => {
+  it("records request, model call, retrieval, and persistence spans", async () => {
+    const traceRecorder = new InMemoryTraceRecorder();
+    app = await buildApp({
+      traceRecorder
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/classifications",
+      payload: {
+        text: "I want a refund because I was charged twice.",
+        source: "manual"
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/knowledge/search",
+      payload: {
+        query: "refund chargeback human review",
+        topK: 3
+      }
+    });
+
+    const spans = traceRecorder.snapshot();
+    const spanNames = spans.map((span) => span.name);
+
+    assert.ok(spanNames.includes("api.request"));
+    assert.ok(spanNames.includes("ai.classify_ticket"));
+    assert.ok(spanNames.includes("persistence.save_classification"));
+    assert.ok(spanNames.includes("retrieval.search"));
+    assert.ok(spanNames.includes("retrieval.embed_text"));
+    assert.equal(
+      spans.some((span) => Object.hasOwn(span.attributes, "ticket.text")),
+      false
+    );
+    assert.equal(
+      spans.some((span) => Object.hasOwn(span.attributes, "query.raw")),
+      false
+    );
   });
 });
 
