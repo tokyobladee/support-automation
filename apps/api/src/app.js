@@ -9,11 +9,13 @@ import {
   TicketClassificationService
 } from "@support/ai";
 import { createPrismaClient, createPrismaSupportRepositories } from "@support/database";
+import { InMemoryMetricsRecorder } from "@support/observability";
 import { buildSeededKnowledgeContext } from "@support/retrieval";
 import { env } from "./env.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
 import { registerCopilotRoutes } from "./routes/copilot.js";
 import { registerKnowledgeRoutes } from "./routes/knowledge.js";
+import { registerMetricsRoutes } from "./routes/metrics.js";
 
 const healthJsonSchema = {
   type: "object",
@@ -96,6 +98,7 @@ export async function buildApp(options = {}) {
     logger: true
   });
   const persistence = options.persistence ?? (await createPersistence());
+  const metricsRecorder = options.metricsRecorder ?? new InMemoryMetricsRecorder();
   const classificationService =
     options.classificationService ??
     createDefaultClassificationService({
@@ -141,15 +144,21 @@ export async function buildApp(options = {}) {
   }));
 
   await app.register(registerClassificationRoutes, {
-    classificationService
+    classificationService,
+    metricsRecorder
   });
   await app.register(registerKnowledgeRoutes, {
     knowledgeRepository: knowledgeContext.repository,
-    knowledgeRetriever: knowledgeContext.retriever
+    knowledgeRetriever: knowledgeContext.retriever,
+    metricsRecorder
   });
   await app.register(registerCopilotRoutes, {
     copilotService,
-    feedbackRepository
+    feedbackRepository,
+    metricsRecorder
+  });
+  await app.register(registerMetricsRoutes, {
+    metricsRecorder
   });
 
   return app;

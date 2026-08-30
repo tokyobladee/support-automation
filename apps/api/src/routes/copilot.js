@@ -1,5 +1,10 @@
 import { agentFeedbackInputSchema, copilotRequestSchema } from "@support/contracts";
 import { FeedbackDraftNotFoundError } from "@support/database";
+import {
+  recordAiRunMetrics,
+  recordHumanDecisionMetrics,
+  recordValidationErrorMetrics
+} from "../metrics.js";
 
 function toValidationIssues(error) {
   return error.issues.map((issue) => ({
@@ -11,11 +16,17 @@ function toValidationIssues(error) {
 export async function registerCopilotRoutes(app, options) {
   const copilotService = options.copilotService;
   const feedbackRepository = options.feedbackRepository;
+  const metricsRecorder = options.metricsRecorder;
 
   app.post("/v1/copilot/drafts", async (request, reply) => {
     const parsed = copilotRequestSchema.safeParse(request.body);
 
     if (!parsed.success) {
+      recordValidationErrorMetrics(metricsRecorder, {
+        route: "POST /v1/copilot/drafts",
+        error: parsed.error
+      });
+
       return reply.code(400).send({
         error: {
           code: "VALIDATION_ERROR",
@@ -26,6 +37,7 @@ export async function registerCopilotRoutes(app, options) {
     }
 
     const draft = await copilotService.draftReply(parsed.data);
+    recordAiRunMetrics(metricsRecorder, draft.aiRun);
 
     return reply.code(201).send({
       data: draft.result,
@@ -40,6 +52,11 @@ export async function registerCopilotRoutes(app, options) {
     const parsed = agentFeedbackInputSchema.safeParse(request.body);
 
     if (!parsed.success) {
+      recordValidationErrorMetrics(metricsRecorder, {
+        route: "POST /v1/copilot/feedback",
+        error: parsed.error
+      });
+
       return reply.code(400).send({
         error: {
           code: "VALIDATION_ERROR",
@@ -65,6 +82,8 @@ export async function registerCopilotRoutes(app, options) {
 
       throw error;
     }
+
+    recordHumanDecisionMetrics(metricsRecorder, feedback);
 
     return reply.code(201).send({
       data: feedback

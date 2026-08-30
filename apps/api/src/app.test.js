@@ -212,3 +212,57 @@ describe("copilot route", () => {
     assert.equal(body.error.issues[0].path, "draftId");
   });
 });
+
+describe("metrics route", () => {
+  it("reports AI, schema, retrieval, and human decision metrics", async () => {
+    app = await buildApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/v1/classifications",
+      payload: {
+        text: "I want a refund because I was charged twice.",
+        source: "manual"
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/knowledge/search",
+      payload: {
+        query: "refund chargeback human review",
+        topK: 3
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/copilot/feedback",
+      payload: {
+        draftId: "draft-1",
+        decision: "escalated",
+        reason: "Needs supervisor review."
+      }
+    });
+    await app.inject({
+      method: "POST",
+      url: "/v1/copilot/drafts",
+      payload: {
+        text: "",
+        source: "manual"
+      }
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/metrics"
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.data.ai.totalRuns, 1);
+    assert.equal(body.data.ai.byPurpose.ticket_classification, 1);
+    assert.equal(body.data.retrieval.totalQueries, 1);
+    assert.equal(body.data.retrieval.hitRate, 1);
+    assert.equal(body.data.schemas.totalErrors, 1);
+    assert.equal(body.data.decisions.escalationCount, 1);
+  });
+});

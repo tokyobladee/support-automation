@@ -1,4 +1,5 @@
 import { knowledgeSearchRequestSchema } from "@support/contracts";
+import { recordRetrievalMetrics, recordValidationErrorMetrics } from "../metrics.js";
 
 function toValidationIssues(error) {
   return error.issues.map((issue) => ({
@@ -41,6 +42,7 @@ function toChunkSummary(chunk) {
 export async function registerKnowledgeRoutes(app, options) {
   const repository = options.knowledgeRepository;
   const retriever = options.knowledgeRetriever;
+  const metricsRecorder = options.metricsRecorder;
 
   app.get("/v1/knowledge/documents", async () => {
     const documents = await repository.listDocuments();
@@ -67,6 +69,11 @@ export async function registerKnowledgeRoutes(app, options) {
     const parsed = knowledgeSearchRequestSchema.safeParse(request.body);
 
     if (!parsed.success) {
+      recordValidationErrorMetrics(metricsRecorder, {
+        route: "POST /v1/knowledge/search",
+        error: parsed.error
+      });
+
       return reply.code(400).send({
         error: {
           code: "VALIDATION_ERROR",
@@ -77,6 +84,7 @@ export async function registerKnowledgeRoutes(app, options) {
     }
 
     const result = await retriever.search(parsed.data);
+    recordRetrievalMetrics(metricsRecorder, result);
 
     return {
       data: result.citations,
