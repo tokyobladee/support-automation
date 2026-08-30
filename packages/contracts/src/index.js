@@ -118,3 +118,24 @@ export const copilotResponseSchema = copilotDraftResponseSchema.extend({
   citations: z.array(knowledgeCitationSchema),
   automationEligibility: z.enum(automationEligibilityValues)
 });
+
+export const agentFeedbackDecisionValues = Object.freeze([
+  "accepted",
+  "edited",
+  "rejected",
+  "escalated",
+  "marked_bad_output"
+]);
+
+export const agentFeedbackInputSchema = z.object({
+  draftId: z.string().trim().min(1).max(128),
+  decision: z.enum(agentFeedbackDecisionValues),
+  tone: z.enum(replyToneValues).optional(),
+  editedContent: z.string().trim().min(1).max(6000).optional(),
+  reason: z.string().trim().min(1).max(1000).optional()
+});
+
+export const agentFeedbackSchema = agentFeedbackInputSchema.extend({
+  id: z.string().trim().min(1),
+  createdAt: z.string().datetime()
+});

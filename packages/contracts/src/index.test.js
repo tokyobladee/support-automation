@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  agentFeedbackInputSchema,
   classificationResponseSchema,
   copilotResponseSchema,
   knowledgeDocumentInputSchema,
@@ -129,5 +130,17 @@ describe("copilot contracts", () => {
     });
 
     assert.equal(result.replyVariants[0].tone, "formal");
+  });
+
+  it("accepts structured agent feedback", () => {
+    const result = agentFeedbackInputSchema.parse({
+      draftId: "draft-1",
+      decision: "marked_bad_output",
+      tone: "empathetic",
+      editedContent: "The draft overpromised a refund.",
+      reason: "Policy claim was too strong."
+    });
+
+    assert.equal(result.decision, "marked_bad_output");
   });
 });

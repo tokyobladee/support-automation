@@ -8,13 +8,15 @@ export class CopilotService {
     provider,
     knowledgeRetriever,
     repository,
-    clock = () => new Date()
+    clock = () => new Date(),
+    idFactory = () => crypto.randomUUID()
   }) {
     this.classificationService = classificationService;
     this.provider = provider;
     this.knowledgeRetriever = knowledgeRetriever;
     this.repository = repository;
     this.clock = clock;
+    this.idFactory = idFactory;
   }
 
   async draftReply(input) {
@@ -63,6 +65,7 @@ export class CopilotService {
       automationEligibility: policy.eligibility
     });
     const record = {
+      id: this.idFactory(),
       request,
       result,
       aiRun: {

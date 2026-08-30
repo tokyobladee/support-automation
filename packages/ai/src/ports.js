@@ -19,3 +19,13 @@ export class CopilotRepository {
     throw new Error("CopilotRepository.saveCopilotDraft must be implemented");
   }
 }
+
+export class AgentFeedbackRepository {
+  async saveFeedback(_record) {
+    throw new Error("AgentFeedbackRepository.saveFeedback must be implemented");
+  }
+
+  async listFeedback() {
+    throw new Error("AgentFeedbackRepository.listFeedback must be implemented");
+  }
+}

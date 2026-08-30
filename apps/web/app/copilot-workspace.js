@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { draftCopilotReply } from "../lib/api-client.js";
+import { draftCopilotReply, submitAgentFeedback } from "../lib/api-client.js";
 
 const sampleTickets = [
   {
@@ -23,7 +23,7 @@ const actionLabels = {
   accepted: "Accepted",
   rejected: "Rejected",
   escalated: "Escalated",
-  bad_output: "Bad Output"
+  marked_bad_output: "Bad Output"
 };
 
 function formatLabel(value) {
@@ -44,6 +44,7 @@ export function CopilotWorkspace() {
   const [selectedTone, setSelectedTone] = useState("formal");
   const [editableReply, setEditableReply] = useState("");
   const [decision, setDecision] = useState("draft");
+  const [feedbackStatus, setFeedbackStatus] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,6 +64,7 @@ export function CopilotWorkspace() {
     setIsSubmitting(true);
     setError(null);
     setDecision("draft");
+    setFeedbackStatus("");
 
     try {
       const response = await draftCopilotReply({
@@ -87,6 +89,31 @@ export function CopilotWorkspace() {
     setSelectedTone(variant.tone);
     setEditableReply(variant.body);
     setDecision("draft");
+    setFeedbackStatus("");
+  }
+
+  async function handleAgentDecision(nextDecision) {
+    if (!result || !selectedVariant) {
+      return;
+    }
+
+    setDecision(nextDecision);
+    setFeedbackStatus("Saving");
+    setError(null);
+
+    try {
+      await submitAgentFeedback({
+        draftId: result.meta.draftId,
+        decision: nextDecision,
+        tone: selectedVariant.tone,
+        editedContent: editableReply,
+        reason: nextDecision === "marked_bad_output" ? "Agent marked this AI output for review." : undefined
+      });
+      setFeedbackStatus("Saved");
+    } catch (requestError) {
+      setError(requestError.message);
+      setFeedbackStatus("Failed");
+    }
   }
 
   return (
@@ -179,6 +206,7 @@ export function CopilotWorkspace() {
                   </div>
                   <span className="decision-badge">{actionLabels[decision]}</span>
                 </div>
+                {feedbackStatus ? <div className="feedback-status">{feedbackStatus}</div> : null}
                 <div className="reason-list">
                   {result.data.reviewReasons.length > 0 ? (
                     result.data.reviewReasons.map((reason) => (
@@ -244,16 +272,16 @@ export function CopilotWorkspace() {
                       />
                     </label>
                     <div className="agent-action-row">
-                      <button type="button" onClick={() => setDecision("accepted")}>
+                      <button type="button" onClick={() => handleAgentDecision("accepted")}>
                         Accept
                       </button>
-                      <button type="button" onClick={() => setDecision("rejected")}>
+                      <button type="button" onClick={() => handleAgentDecision("rejected")}>
                         Reject
                       </button>
-                      <button type="button" onClick={() => setDecision("escalated")}>
+                      <button type="button" onClick={() => handleAgentDecision("escalated")}>
                         Escalate
                       </button>
-                      <button type="button" onClick={() => setDecision("bad_output")}>
+                      <button type="button" onClick={() => handleAgentDecision("marked_bad_output")}>
                         Bad Output
                       </button>
                     </div>

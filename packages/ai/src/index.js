@@ -1,4 +1,9 @@
-export { AiProvider, ClassificationRepository, CopilotRepository } from "./ports.js";
+export {
+  AgentFeedbackRepository,
+  AiProvider,
+  ClassificationRepository,
+  CopilotRepository
+} from "./ports.js";
 export { buildTicketClassificationPrompt } from "./ticket-classification-prompt.js";
 export { buildCopilotPrompt } from "./copilot-prompt.js";
 export { TicketClassificationService } from "./ticket-classification-service.js";
@@ -11,3 +16,4 @@ export {
 export { createTicketClassifierProvider } from "./ticket-classifier-provider-factory.js";
 export { InMemoryClassificationRepository } from "./in-memory-classification-repository.js";
 export { InMemoryCopilotRepository } from "./in-memory-copilot-repository.js";
+export { InMemoryAgentFeedbackRepository } from "./in-memory-agent-feedback-repository.js";

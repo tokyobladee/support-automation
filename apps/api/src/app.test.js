@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
+import { InMemoryAgentFeedbackRepository } from "@support/ai";
 import { buildApp } from "./app.js";
 
 let app;
@@ -141,6 +142,7 @@ describe("copilot route", () => {
     assert.equal(body.data.citations.length > 0, true);
     assert.equal(body.data.automationEligibility, "automation_blocked");
     assert.equal(body.meta.aiRun.provider, "mock");
+    assert.equal(typeof body.meta.draftId, "string");
   });
 
   it("returns validation errors for invalid copilot requests", async () => {
@@ -159,5 +161,54 @@ describe("copilot route", () => {
     assert.equal(response.statusCode, 400);
     assert.equal(body.error.code, "VALIDATION_ERROR");
     assert.equal(body.error.issues[0].path, "text");
+  });
+
+  it("stores and lists agent feedback", async () => {
+    const feedbackRepository = new InMemoryAgentFeedbackRepository({
+      idFactory: () => "feedback-1",
+      clock: () => new Date("2026-08-30T10:00:00.000Z")
+    });
+    app = await buildApp({
+      feedbackRepository
+    });
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/v1/copilot/feedback",
+      payload: {
+        draftId: "draft-1",
+        decision: "marked_bad_output",
+        tone: "concise",
+        editedContent: "This response needs a safer policy explanation.",
+        reason: "It overpromised the outcome."
+      }
+    });
+    const listResponse = await app.inject({
+      method: "GET",
+      url: "/v1/copilot/feedback"
+    });
+
+    assert.equal(createResponse.statusCode, 201);
+    assert.equal(createResponse.json().data.id, "feedback-1");
+    assert.equal(listResponse.statusCode, 200);
+    assert.equal(listResponse.json().data.length, 1);
+  });
+
+  it("returns validation errors for invalid feedback", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/copilot/feedback",
+      payload: {
+        draftId: "",
+        decision: "approve_refund"
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.equal(body.error.issues[0].path, "draftId");
   });
 });

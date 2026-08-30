@@ -1,4 +1,4 @@
-import { copilotRequestSchema } from "@support/contracts";
+import { agentFeedbackInputSchema, copilotRequestSchema } from "@support/contracts";
 
 function toValidationIssues(error) {
   return error.issues.map((issue) => ({
@@ -9,6 +9,7 @@ function toValidationIssues(error) {
 
 export async function registerCopilotRoutes(app, options) {
   const copilotService = options.copilotService;
+  const feedbackRepository = options.feedbackRepository;
 
   app.post("/v1/copilot/drafts", async (request, reply) => {
     const parsed = copilotRequestSchema.safeParse(request.body);
@@ -28,8 +29,33 @@ export async function registerCopilotRoutes(app, options) {
     return reply.code(201).send({
       data: draft.result,
       meta: {
-        aiRun: draft.aiRun
+        aiRun: draft.aiRun,
+        draftId: draft.id
       }
     });
   });
+
+  app.post("/v1/copilot/feedback", async (request, reply) => {
+    const parsed = agentFeedbackInputSchema.safeParse(request.body);
+
+    if (!parsed.success) {
+      return reply.code(400).send({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid agent feedback request",
+          issues: toValidationIssues(parsed.error)
+        }
+      });
+    }
+
+    const feedback = await feedbackRepository.saveFeedback(parsed.data);
+
+    return reply.code(201).send({
+      data: feedback
+    });
+  });
+
+  app.get("/v1/copilot/feedback", async () => ({
+    data: await feedbackRepository.listFeedback()
+  }));
 }

@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import {
   createTicketClassifierProvider,
   CopilotService,
+  InMemoryAgentFeedbackRepository,
   InMemoryClassificationRepository,
   InMemoryCopilotRepository,
   TicketClassificationService
@@ -64,6 +65,8 @@ export async function buildApp(options = {}) {
       classificationService,
       knowledgeRetriever: knowledgeContext.retriever
     });
+  const feedbackRepository =
+    options.feedbackRepository ?? new InMemoryAgentFeedbackRepository();
 
   await app.register(cors, {
     origin: true
@@ -88,7 +91,8 @@ export async function buildApp(options = {}) {
     knowledgeRetriever: knowledgeContext.retriever
   });
   await app.register(registerCopilotRoutes, {
-    copilotService
+    copilotService,
+    feedbackRepository
   });
 
   return app;
