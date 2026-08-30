@@ -1,4 +1,6 @@
 import { knowledgeSearchRequestSchema } from "@support/contracts";
+import { permissions } from "@support/auth";
+import { requirePermission } from "../auth.js";
 import { recordRetrievalMetrics, recordValidationErrorMetrics } from "../metrics.js";
 
 function toValidationIssues(error) {
@@ -42,9 +44,21 @@ function toChunkSummary(chunk) {
 export async function registerKnowledgeRoutes(app, options) {
   const repository = options.knowledgeRepository;
   const retriever = options.knowledgeRetriever;
+  const authContext = options.authContext;
   const metricsRecorder = options.metricsRecorder;
 
-  app.get("/v1/knowledge/documents", async () => {
+  app.get("/v1/knowledge/documents", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.viewKnowledge
+    });
+
+    if (!user) {
+      return;
+    }
+
     const documents = await repository.listDocuments();
 
     return {
@@ -52,7 +66,18 @@ export async function registerKnowledgeRoutes(app, options) {
     };
   });
 
-  app.get("/v1/knowledge/chunks", async (request) => {
+  app.get("/v1/knowledge/chunks", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.viewKnowledge
+    });
+
+    if (!user) {
+      return;
+    }
+
     const chunks = await repository.listChunks();
     const query = request.query ?? {};
     const documentId = typeof query.documentId === "string" ? query.documentId : undefined;
@@ -66,6 +91,17 @@ export async function registerKnowledgeRoutes(app, options) {
   });
 
   app.post("/v1/knowledge/search", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.viewKnowledge
+    });
+
+    if (!user) {
+      return;
+    }
+
     const parsed = knowledgeSearchRequestSchema.safeParse(request.body);
 
     if (!parsed.success) {

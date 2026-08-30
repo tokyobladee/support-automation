@@ -14,6 +14,8 @@ const envSchema = z.object({
   DEFAULT_ORGANIZATION_SLUG: z.string().min(1).default("default-support"),
   DEFAULT_AGENT_EMAIL: z.string().email().default("agent@example.com"),
   DEFAULT_AGENT_NAME: z.string().min(1).default("Support Agent"),
+  DEFAULT_AGENT_ROLE: z.enum(["agent", "lead", "admin"]).default("admin"),
+  AUTH_MODE: z.enum(["disabled", "headers"]).default("disabled"),
   AI_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
   OPENAI_CLASSIFICATION_MODEL: z.string().min(1).default("gpt-5.6"),
   EMBEDDING_PROVIDER: z.enum(["hash", "openai"]).default("hash"),
@@ -26,6 +28,14 @@ const envSchema = z.object({
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional()
+}).superRefine((value, context) => {
+  if (value.NODE_ENV === "production" && value.AUTH_MODE === "disabled") {
+    context.addIssue({
+      code: "custom",
+      path: ["AUTH_MODE"],
+      message: "AUTH_MODE must not be disabled in production"
+    });
+  }
 });
 
 export const env = envSchema.parse(process.env);

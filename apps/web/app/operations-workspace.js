@@ -1,6 +1,7 @@
 "use client";
 
-import { createElement, useState } from "react";
+import { createElement, useEffect, useState } from "react";
+import { getAuthSession } from "../lib/api-client.js";
 import { AuditWorkspace } from "./audit-workspace.js";
 import { CopilotWorkspace } from "./copilot-workspace.js";
 import { KnowledgeWorkspace } from "./knowledge-workspace.js";
@@ -41,6 +42,31 @@ const viewComponents = {
 
 export function OperationsWorkspace() {
   const [activeView, setActiveView] = useState("triage");
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSession() {
+      try {
+        const response = await getAuthSession();
+
+        if (isMounted) {
+          setSession(response.data);
+        }
+      } catch {
+        if (isMounted) {
+          setSession(null);
+        }
+      }
+    }
+
+    loadSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <main className="shell">
@@ -64,7 +90,7 @@ export function OperationsWorkspace() {
           </div>
           <div className="system-status">
             <span className="status-dot" />
-            Operational workspace
+            {session ? `${session.role} workspace` : "Operational workspace"}
           </div>
         </div>
       </header>

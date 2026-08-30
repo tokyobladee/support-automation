@@ -18,6 +18,17 @@ export async function classifyTicket(payload) {
   return body;
 }
 
+export async function getAuthSession() {
+  const response = await fetch(`${apiBaseUrl}/v1/auth/session`);
+  const body = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(body.error?.message ?? "Auth session request failed");
+  }
+
+  return body;
+}
+
 export async function listKnowledgeDocuments() {
   const response = await fetch(`${apiBaseUrl}/v1/knowledge/documents`);
   const body = await parseJsonResponse(response);

@@ -1,5 +1,7 @@
 import { classificationRequestSchema } from "@support/contracts";
+import { permissions } from "@support/auth";
 import { recordAiRunAuditEvent } from "../audit.js";
+import { requirePermission } from "../auth.js";
 import { recordAiRunMetrics, recordValidationErrorMetrics } from "../metrics.js";
 
 function toValidationIssues(error) {
@@ -11,10 +13,22 @@ function toValidationIssues(error) {
 
 export async function registerClassificationRoutes(app, options) {
   const classificationService = options.classificationService;
+  const authContext = options.authContext;
   const auditLog = options.auditLog;
   const metricsRecorder = options.metricsRecorder;
 
   app.post("/v1/classifications", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.classifyTickets
+    });
+
+    if (!user) {
+      return;
+    }
+
     const parsed = classificationRequestSchema.safeParse(request.body);
 
     if (!parsed.success) {

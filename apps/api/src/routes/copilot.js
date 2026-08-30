@@ -1,6 +1,8 @@
 import { agentFeedbackInputSchema, copilotRequestSchema } from "@support/contracts";
+import { permissions } from "@support/auth";
 import { FeedbackDraftNotFoundError } from "@support/database";
 import { recordAiRunAuditEvent, recordHumanDecisionAuditEvent } from "../audit.js";
+import { requirePermission } from "../auth.js";
 import {
   recordAiRunMetrics,
   recordHumanDecisionMetrics,
@@ -17,10 +19,22 @@ function toValidationIssues(error) {
 export async function registerCopilotRoutes(app, options) {
   const copilotService = options.copilotService;
   const feedbackRepository = options.feedbackRepository;
+  const authContext = options.authContext;
   const auditLog = options.auditLog;
   const metricsRecorder = options.metricsRecorder;
 
   app.post("/v1/copilot/drafts", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.useCopilot
+    });
+
+    if (!user) {
+      return;
+    }
+
     const parsed = copilotRequestSchema.safeParse(request.body);
 
     if (!parsed.success) {
@@ -52,6 +66,17 @@ export async function registerCopilotRoutes(app, options) {
   });
 
   app.post("/v1/copilot/feedback", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.submitFeedback
+    });
+
+    if (!user) {
+      return;
+    }
+
     const parsed = agentFeedbackInputSchema.safeParse(request.body);
 
     if (!parsed.success) {
@@ -94,7 +119,20 @@ export async function registerCopilotRoutes(app, options) {
     });
   });
 
-  app.get("/v1/copilot/feedback", async () => ({
-    data: await feedbackRepository.listFeedback()
-  }));
+  app.get("/v1/copilot/feedback", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.submitFeedback
+    });
+
+    if (!user) {
+      return;
+    }
+
+    return {
+      data: await feedbackRepository.listFeedback()
+    };
+  });
 }

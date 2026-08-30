@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import { InMemoryAgentFeedbackRepository } from "@support/ai";
+import { createAuthContext } from "./auth.js";
 import { buildApp } from "./app.js";
 
 let app;
@@ -26,6 +27,103 @@ describe("health route", () => {
       status: "ok",
       service: "support-api"
     });
+  });
+});
+
+describe("auth route", () => {
+  it("returns the current default session", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/auth/session"
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(body.data.role, "admin");
+    assert.ok(body.data.permissions.includes("view_metrics"));
+  });
+
+  it("requires headers when header auth mode is enabled", async () => {
+    app = await buildApp({
+      authContext: createAuthContext({
+        mode: "headers",
+        defaultUser: {
+          id: "unused",
+          email: "unused@example.com",
+          name: "Unused",
+          organizationSlug: "default-support",
+          role: "admin"
+        }
+      })
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/classifications",
+      payload: {
+        text: "I need help.",
+        source: "manual"
+      }
+    });
+
+    assert.equal(response.statusCode, 401);
+    assert.equal(response.json().error.code, "AUTHENTICATION_REQUIRED");
+  });
+
+  it("denies agent access to lead-only metrics", async () => {
+    app = await buildApp({
+      authContext: createAuthContext({
+        mode: "headers",
+        defaultUser: {
+          id: "unused",
+          email: "unused@example.com",
+          name: "Unused",
+          organizationSlug: "default-support",
+          role: "admin"
+        }
+      })
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/metrics",
+      headers: {
+        "x-support-role": "agent",
+        "x-support-user-email": "agent@example.com"
+      }
+    });
+
+    assert.equal(response.statusCode, 403);
+    assert.equal(response.json().error.code, "AUTHORIZATION_DENIED");
+  });
+
+  it("allows lead access to audit events", async () => {
+    app = await buildApp({
+      authContext: createAuthContext({
+        mode: "headers",
+        defaultUser: {
+          id: "unused",
+          email: "unused@example.com",
+          name: "Unused",
+          organizationSlug: "default-support",
+          role: "admin"
+        }
+      })
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/v1/audit/events",
+      headers: {
+        "x-support-role": "lead",
+        "x-support-user-email": "lead@example.com"
+      }
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json().data, []);
   });
 });
 

@@ -12,8 +12,10 @@ import {
 import { createPrismaClient, createPrismaSupportRepositories } from "@support/database";
 import { InMemoryMetricsRecorder } from "@support/observability";
 import { buildSeededKnowledgeContext } from "@support/retrieval";
+import { createAuthContext } from "./auth.js";
 import { env } from "./env.js";
 import { registerAuditRoutes } from "./routes/audit.js";
+import { registerAuthRoutes } from "./routes/auth.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
 import { registerCopilotRoutes } from "./routes/copilot.js";
 import { registerKnowledgeRoutes } from "./routes/knowledge.js";
@@ -100,6 +102,18 @@ export async function buildApp(options = {}) {
     logger: true
   });
   const persistence = options.persistence ?? (await createPersistence());
+  const authContext =
+    options.authContext ??
+    createAuthContext({
+      mode: env.AUTH_MODE,
+      defaultUser: {
+        id: env.DEFAULT_AGENT_EMAIL,
+        email: env.DEFAULT_AGENT_EMAIL,
+        name: env.DEFAULT_AGENT_NAME,
+        organizationSlug: env.DEFAULT_ORGANIZATION_SLUG,
+        role: env.DEFAULT_AGENT_ROLE
+      }
+    });
   const auditLog = options.auditLog ?? new InMemoryAuditLog();
   const metricsRecorder = options.metricsRecorder ?? new InMemoryMetricsRecorder();
   const classificationService =
@@ -146,27 +160,35 @@ export async function buildApp(options = {}) {
     service: "support-api"
   }));
 
+  await app.register(registerAuthRoutes, {
+    authContext
+  });
   await app.register(registerClassificationRoutes, {
     classificationService,
+    authContext,
     auditLog,
     metricsRecorder
   });
   await app.register(registerKnowledgeRoutes, {
     knowledgeRepository: knowledgeContext.repository,
     knowledgeRetriever: knowledgeContext.retriever,
+    authContext,
     metricsRecorder
   });
   await app.register(registerCopilotRoutes, {
     copilotService,
     feedbackRepository,
+    authContext,
     auditLog,
     metricsRecorder
   });
   await app.register(registerAuditRoutes, {
-    auditLog
+    auditLog,
+    authContext
   });
   await app.register(registerMetricsRoutes, {
-    metricsRecorder
+    metricsRecorder,
+    authContext
   });
 
   return app;

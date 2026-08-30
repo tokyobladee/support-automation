@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { permissions } from "@support/auth";
+import { requirePermission } from "../auth.js";
 
 const auditQuerySchema = z.object({
   type: z.enum(["ai_run_completed", "human_decision_recorded"]).optional(),
@@ -14,8 +16,20 @@ function toValidationIssues(error) {
 
 export async function registerAuditRoutes(app, options) {
   const auditLog = options.auditLog;
+  const authContext = options.authContext;
 
   app.get("/v1/audit/events", async (request, reply) => {
+    const user = await requirePermission({
+      authContext,
+      request,
+      reply,
+      permission: permissions.viewAuditLog
+    });
+
+    if (!user) {
+      return;
+    }
+
     const parsed = auditQuerySchema.safeParse(request.query ?? {});
 
     if (!parsed.success) {

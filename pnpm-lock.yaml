@@ -35,6 +35,9 @@ importers:
       '@support/audit':
         specifier: workspace:*
         version: link:../../packages/audit
+      '@support/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@support/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -85,6 +88,8 @@ importers:
         version: link:../domain
 
   packages/audit: {}
+
+  packages/auth: {}
 
   packages/contracts:
     dependencies:
