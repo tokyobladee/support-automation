@@ -17,6 +17,7 @@
     "test": "pnpm -r --if-present test",
     "schema:check": "pnpm -r --if-present schema:check",
     "eval:classification": "pnpm --filter @support/testing eval:classification",
+    "search:knowledge": "pnpm --filter @support/retrieval search:knowledge",
     "db:generate": "pnpm --filter @support/database db:generate",
     "db:migrate": "pnpm --filter @support/database db:migrate",
     "db:studio": "pnpm --filter @support/database db:studio",

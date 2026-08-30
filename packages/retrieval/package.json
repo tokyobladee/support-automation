@@ -9,8 +9,9 @@
   "scripts": {
     "build": "node --check src/index.js",
     "lint": "eslint .",
+    "search:knowledge": "node src/run-knowledge-search.js",
     "test": "node --test",
-    "schema:check": "node src/index.js"
+    "schema:check": "node src/index.js && node --check src/run-knowledge-search.js"
   },
   "dependencies": {
     "@support/contracts": "workspace:*"
