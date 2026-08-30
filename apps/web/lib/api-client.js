@@ -1,4 +1,6 @@
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+import { webEnv } from "./env.js";
+
+const apiBaseUrl = webEnv.NEXT_PUBLIC_API_BASE_URL;
 
 export async function classifyTicket(payload) {
   const response = await fetch(`${apiBaseUrl}/v1/classifications`, {

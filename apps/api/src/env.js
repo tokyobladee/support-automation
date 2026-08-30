@@ -36,6 +36,46 @@ const envSchema = z.object({
       message: "AUTH_MODE must not be disabled in production"
     });
   }
+
+  if (value.NODE_ENV !== "production") {
+    return;
+  }
+
+  if (value.PERSISTENCE_PROVIDER !== "prisma") {
+    context.addIssue({
+      code: "custom",
+      path: ["PERSISTENCE_PROVIDER"],
+      message: "PERSISTENCE_PROVIDER must be prisma in production"
+    });
+  }
+
+  if (value.AI_PROVIDER !== "openai") {
+    context.addIssue({
+      code: "custom",
+      path: ["AI_PROVIDER"],
+      message: "AI_PROVIDER must be openai in production"
+    });
+  }
+
+  if (value.EMBEDDING_PROVIDER !== "openai") {
+    context.addIssue({
+      code: "custom",
+      path: ["EMBEDDING_PROVIDER"],
+      message: "EMBEDDING_PROVIDER must be openai in production"
+    });
+  }
+
+  if (!value.OPENAI_API_KEY) {
+    context.addIssue({
+      code: "custom",
+      path: ["OPENAI_API_KEY"],
+      message: "OPENAI_API_KEY is required in production"
+    });
+  }
 });
 
-export const env = envSchema.parse(process.env);
+export function parseEnv(input) {
+  return envSchema.parse(input);
+}
+
+export const env = parseEnv(process.env);

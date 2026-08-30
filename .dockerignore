@@ -1,0 +1,10 @@
+.agent-workspace
+.git
+.next
+coverage
+dist
+node_modules
+*.log
+.env
+.env.*
+!.env.example
