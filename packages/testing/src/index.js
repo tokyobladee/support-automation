@@ -1,4 +1,4 @@
-import { automationEligibility, priorityLevels, reviewReasons, ticketCategories } from "@support/domain";
+import { automationEligibility, priorityLevels, ticketCategories } from "@support/domain";
 export { evaluateClassifier } from "./classification-evaluator.js";
 
 export const syntheticTicketSeeds = Object.freeze([

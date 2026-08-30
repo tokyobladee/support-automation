@@ -7,7 +7,7 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
+    "test": "node --test",
     "schema:check": "node -e \"import('./next.config.js').then(() => true)\""
   },
   "dependencies": {
@@ -18,7 +18,5 @@
     "react-dom": "^19.2.3",
     "zod": "^4.1.13"
   },
-  "devDependencies": {
-    "vitest": "^4.0.15"
-  }
+  "devDependencies": {}
 }

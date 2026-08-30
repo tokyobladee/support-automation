@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { automationEligibility, ticketCategories } from "@support/domain";
 import { InMemoryClassificationRepository } from "./in-memory-classification-repository.js";
 import { MockTicketClassifierProvider } from "./mock-ticket-classifier-provider.js";
@@ -17,9 +18,9 @@ describe("TicketClassificationService", () => {
       source: "manual"
     });
 
-    expect(result.classification.category).toBe(ticketCategories.subscription);
-    expect(result.classification.automationEligibility).toBe(automationEligibility.safeToSuggest);
-    expect(repository.all()).toHaveLength(1);
+    assert.equal(result.classification.category, ticketCategories.subscription);
+    assert.equal(result.classification.automationEligibility, automationEligibility.safeToSuggest);
+    assert.equal(repository.all().length, 1);
   });
 
   it("overrides unsafe provider eligibility with domain policy", async () => {
@@ -32,9 +33,7 @@ describe("TicketClassificationService", () => {
       source: "manual"
     });
 
-    expect(result.classification.category).toBe(ticketCategories.refundRequest);
-    expect(result.classification.automationEligibility).toBe(
-      automationEligibility.automationBlocked
-    );
+    assert.equal(result.classification.category, ticketCategories.refundRequest);
+    assert.equal(result.classification.automationEligibility, automationEligibility.automationBlocked);
   });
 });

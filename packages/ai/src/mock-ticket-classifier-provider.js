@@ -54,6 +54,22 @@ const keywordRules = [
   }
 ];
 
+const categoryRank = new Map([
+  [ticketCategories.refundRequest, 1],
+  [ticketCategories.accountAccess, 2],
+  [ticketCategories.expertComplaint, 3],
+  [ticketCategories.bug, 4],
+  [ticketCategories.billing, 5],
+  [ticketCategories.subscription, 6],
+  [ticketCategories.productGuidance, 7]
+]);
+
+const billingFlowCategories = new Set([
+  ticketCategories.refundRequest,
+  ticketCategories.billing,
+  ticketCategories.subscription
+]);
+
 export class MockTicketClassifierProvider {
   constructor() {
     this.name = "mock";
@@ -65,6 +81,20 @@ export class MockTicketClassifierProvider {
     const matches = keywordRules.filter((rule) =>
       rule.keywords.some((keyword) => text.includes(keyword))
     );
+
+    if (matches.length > 1 && matches.every((match) => billingFlowCategories.has(match.category))) {
+      const match = this.selectPrimaryMatch(matches);
+
+      return this.buildResult({
+        category: match.category,
+        priority: match.priority,
+        confidence: 0.82,
+        recommendedNextStep: this.nextStepFor(match.category),
+        rationale: `The ticket contains related billing-flow signals and maps to ${match.category}.`,
+        reviewReasons: match.reviewReasons,
+        quote: request.text.slice(0, 180)
+      });
+    }
 
     if (matches.length > 1) {
       return this.buildResult({
@@ -119,6 +149,13 @@ export class MockTicketClassifierProvider {
         }
       ]
     };
+  }
+
+  selectPrimaryMatch(matches) {
+    return [...matches].sort(
+      (first, second) =>
+        (categoryRank.get(first.category) ?? 99) - (categoryRank.get(second.category) ?? 99)
+    )[0];
   }
 
   nextStepFor(category) {

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { afterEach, describe, it } from "node:test";
 import { buildApp } from "./app.js";
 
 let app;
@@ -19,8 +20,8 @@ describe("health route", () => {
       url: "/health"
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json(), {
       status: "ok",
       service: "support-api"
     });
@@ -42,11 +43,11 @@ describe("classification route", () => {
 
     const body = response.json();
 
-    expect(response.statusCode).toBe(201);
-    expect(body.data.category).toBe("refund_request");
-    expect(body.data.automationEligibility).toBe("automation_blocked");
-    expect(body.data.reviewReasons).toContain("financial_decision");
-    expect(body.meta.aiRun.provider).toBe("mock");
+    assert.equal(response.statusCode, 201);
+    assert.equal(body.data.category, "refund_request");
+    assert.equal(body.data.automationEligibility, "automation_blocked");
+    assert.ok(body.data.reviewReasons.includes("financial_decision"));
+    assert.equal(body.meta.aiRun.provider, "mock");
   });
 
   it("returns validation errors for invalid requests", async () => {
@@ -62,8 +63,8 @@ describe("classification route", () => {
 
     const body = response.json();
 
-    expect(response.statusCode).toBe(400);
-    expect(body.error.code).toBe("VALIDATION_ERROR");
-    expect(body.error.issues[0].path).toBe("text");
+    assert.equal(response.statusCode, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.equal(body.error.issues[0].path, "text");
   });
 });

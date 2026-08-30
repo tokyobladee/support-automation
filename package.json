@@ -9,13 +9,13 @@
     "pnpm": ">=11.0.0"
   },
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
+    "dev": "pnpm --parallel --filter @support/api --filter @support/web dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "test": "turbo test",
-    "schema:check": "turbo schema:check",
+    "test": "pnpm -r --if-present test",
+    "schema:check": "pnpm -r --if-present schema:check",
     "db:generate": "pnpm --filter @support/database db:generate",
     "db:migrate": "pnpm --filter @support/database db:migrate",
     "db:studio": "pnpm --filter @support/database db:studio",
@@ -27,8 +27,6 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.5.0",
-    "prettier": "^3.7.4",
-    "turbo": "^2.6.3",
-    "vitest": "^4.0.15"
+    "prettier": "^3.7.4"
   }
 }

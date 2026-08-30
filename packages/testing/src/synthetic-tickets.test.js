@@ -1,21 +1,22 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { syntheticTicketSeeds, syntheticTicketSummary } from "./index.js";
 
 describe("synthetic ticket fixtures", () => {
   it("contains at least 20 cases", () => {
-    expect(syntheticTicketSeeds.length).toBeGreaterThanOrEqual(20);
+    assert.ok(syntheticTicketSeeds.length >= 20);
   });
 
   it("covers required edge case groups", () => {
     const tags = new Set(syntheticTicketSeeds.flatMap((caseItem) => caseItem.tags));
 
-    expect(tags.has("aggressive")).toBe(true);
-    expect(tags.has("mixed")).toBe(true);
-    expect(tags.has("ambiguous")).toBe(true);
-    expect(tags.has("non_english")).toBe(true);
+    assert.equal(tags.has("aggressive"), true);
+    assert.equal(tags.has("mixed"), true);
+    assert.equal(tags.has("ambiguous"), true);
+    assert.equal(tags.has("non_english"), true);
   });
 
   it("keeps summary in sync with fixtures", () => {
-    expect(syntheticTicketSummary.total).toBe(syntheticTicketSeeds.length);
+    assert.equal(syntheticTicketSummary.total, syntheticTicketSeeds.length);
   });
 });

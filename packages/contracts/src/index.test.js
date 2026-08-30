@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { classificationResponseSchema, ticketIntakeSchema } from "./index.js";
 
 describe("ticket intake schema", () => {
@@ -7,14 +8,14 @@ describe("ticket intake schema", () => {
       text: " I need help with my subscription "
     });
 
-    expect(result).toEqual({
+    assert.deepEqual(result, {
       text: "I need help with my subscription",
       source: "manual"
     });
   });
 
   it("rejects empty ticket text", () => {
-    expect(() => ticketIntakeSchema.parse({ text: " " })).toThrow();
+    assert.throws(() => ticketIntakeSchema.parse({ text: " " }));
   });
 
   it("accepts structured classifier output", () => {
@@ -34,6 +35,6 @@ describe("ticket intake schema", () => {
       ]
     });
 
-    expect(result.category).toBe("subscription");
+    assert.equal(result.category, "subscription");
   });
 });

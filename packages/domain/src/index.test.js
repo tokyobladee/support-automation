@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
   automationEligibility,
   priorityLevels,
@@ -15,7 +16,7 @@ describe("automation policy", () => {
       confidence: 0.91
     });
 
-    expect(result).toEqual({
+    assert.deepEqual(result, {
       eligibility: automationEligibility.safeToSuggest,
       reviewReasons: []
     });
@@ -28,8 +29,8 @@ describe("automation policy", () => {
       confidence: 0.88
     });
 
-    expect(result.eligibility).toBe(automationEligibility.humanReviewRequired);
-    expect(result.reviewReasons).toContain(reviewReasons.policySensitiveCategory);
+    assert.equal(result.eligibility, automationEligibility.humanReviewRequired);
+    assert.ok(result.reviewReasons.includes(reviewReasons.policySensitiveCategory));
   });
 
   it("blocks refund decisions from automation", () => {
@@ -39,8 +40,8 @@ describe("automation policy", () => {
       confidence: 0.96
     });
 
-    expect(result.eligibility).toBe(automationEligibility.automationBlocked);
-    expect(result.reviewReasons).toContain(reviewReasons.blockedCategory);
+    assert.equal(result.eligibility, automationEligibility.automationBlocked);
+    assert.ok(result.reviewReasons.includes(reviewReasons.blockedCategory));
   });
 
   it("blocks urgent safety or privacy cases", () => {
@@ -51,9 +52,8 @@ describe("automation policy", () => {
       signals: [reviewReasons.legalOrPrivacyRisk]
     });
 
-    expect(result.eligibility).toBe(automationEligibility.automationBlocked);
-    expect(result.reviewReasons).toEqual(
-      expect.arrayContaining([reviewReasons.urgentPriority, reviewReasons.legalOrPrivacyRisk])
-    );
+    assert.equal(result.eligibility, automationEligibility.automationBlocked);
+    assert.ok(result.reviewReasons.includes(reviewReasons.urgentPriority));
+    assert.ok(result.reviewReasons.includes(reviewReasons.legalOrPrivacyRisk));
   });
 });

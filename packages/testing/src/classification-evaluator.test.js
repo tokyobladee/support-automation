@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { evaluateClassifier } from "./classification-evaluator.js";
 
 describe("classification evaluator", () => {
@@ -31,8 +32,8 @@ describe("classification evaluator", () => {
       ]
     });
 
-    expect(report.total).toBe(1);
-    expect(report.passed).toBe(1);
-    expect(report.accuracy).toBe(1);
+    assert.equal(report.total, 1);
+    assert.equal(report.passed, 1);
+    assert.equal(report.accuracy, 1);
   });
 });

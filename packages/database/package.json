@@ -9,7 +9,7 @@
   "scripts": {
     "build": "node --check src/index.js",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests",
+    "test": "node --test",
     "schema:check": "prisma validate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -22,7 +22,6 @@
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
-    "prisma": "^7.2.0",
-    "vitest": "^4.0.15"
+    "prisma": "^7.2.0"
   }
 }
