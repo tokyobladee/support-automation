@@ -2,12 +2,15 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import {
   createTicketClassifierProvider,
+  CopilotService,
   InMemoryClassificationRepository,
+  InMemoryCopilotRepository,
   TicketClassificationService
 } from "@support/ai";
 import { buildSeededKnowledgeContext } from "@support/retrieval";
 import { env } from "./env.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
+import { registerCopilotRoutes } from "./routes/copilot.js";
 import { registerKnowledgeRoutes } from "./routes/knowledge.js";
 
 const healthJsonSchema = {
@@ -35,6 +38,19 @@ function createDefaultClassificationService() {
   });
 }
 
+function createDefaultCopilotService({ classificationService, knowledgeRetriever }) {
+  return new CopilotService({
+    classificationService,
+    provider: createTicketClassifierProvider({
+      providerName: env.AI_PROVIDER,
+      openAiApiKey: env.OPENAI_API_KEY,
+      openAiModel: env.OPENAI_CLASSIFICATION_MODEL
+    }),
+    knowledgeRetriever,
+    repository: new InMemoryCopilotRepository()
+  });
+}
+
 export async function buildApp(options = {}) {
   const app = Fastify({
     logger: true
@@ -42,6 +58,12 @@ export async function buildApp(options = {}) {
   const classificationService =
     options.classificationService ?? createDefaultClassificationService();
   const knowledgeContext = options.knowledgeContext ?? (await buildSeededKnowledgeContext());
+  const copilotService =
+    options.copilotService ??
+    createDefaultCopilotService({
+      classificationService,
+      knowledgeRetriever: knowledgeContext.retriever
+    });
 
   await app.register(cors, {
     origin: true
@@ -64,6 +86,9 @@ export async function buildApp(options = {}) {
   await app.register(registerKnowledgeRoutes, {
     knowledgeRepository: knowledgeContext.repository,
     knowledgeRetriever: knowledgeContext.retriever
+  });
+  await app.register(registerCopilotRoutes, {
+    copilotService
   });
 
   return app;

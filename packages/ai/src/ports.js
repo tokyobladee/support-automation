@@ -13,3 +13,9 @@ export class ClassificationRepository {
     throw new Error("ClassificationRepository.saveClassification must be implemented");
   }
 }
+
+export class CopilotRepository {
+  async saveCopilotDraft(_record) {
+    throw new Error("CopilotRepository.saveCopilotDraft must be implemented");
+  }
+}

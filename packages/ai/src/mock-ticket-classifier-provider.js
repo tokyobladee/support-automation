@@ -183,6 +183,55 @@ export class MockTicketClassifierProvider {
     });
   }
 
+  async generateReplyVariants({ request, classification, citations }) {
+    const citationChunkIds = citations.slice(0, 2).map((citation) => citation.chunkId);
+    const baseContext =
+      citations[0]?.quote ??
+      "A human agent must review this case before making policy or account decisions.";
+    const subject = request.subject || "Follow-up on your support request";
+
+    return {
+      summary: `The customer needs help with a ${classification.category} issue. Priority is ${classification.priority}.`,
+      replyVariants: [
+        {
+          tone: "formal",
+          subject,
+          body: [
+            "Hello,",
+            "",
+            `Thank you for contacting support. I reviewed your request and the relevant internal guidance: ${baseContext}`,
+            "I will route this with the right context so the next step follows our support policy."
+          ].join("\n"),
+          citationChunkIds
+        },
+        {
+          tone: "empathetic",
+          subject,
+          body: [
+            "Hi,",
+            "",
+            "I understand why this situation is frustrating, and I am sorry for the trouble.",
+            `Based on our support guidance, the safest next step is: ${classification.recommendedNextStep}`,
+            "I will make sure a support agent reviews the details before any sensitive action is taken."
+          ].join("\n"),
+          citationChunkIds
+        },
+        {
+          tone: "concise",
+          subject,
+          body: [
+            "Hi,",
+            "",
+            `We received your request. Next step: ${classification.recommendedNextStep}`,
+            "A support agent will review any policy-sensitive action before proceeding."
+          ].join("\n"),
+          citationChunkIds
+        }
+      ],
+      reviewReasons: citations.length === 0 ? ["missing_knowledge_citation"] : []
+    };
+  }
+
   buildResult(input) {
     return {
       category: input.category,

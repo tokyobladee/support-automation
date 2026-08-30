@@ -1,4 +1,8 @@
-import { classificationResponseSchema } from "@support/contracts";
+import {
+  classificationResponseSchema,
+  copilotDraftResponseSchema,
+  replyToneValues
+} from "@support/contracts";
 import {
   automationEligibilityValues,
   priorityValues,
@@ -69,6 +73,52 @@ const classificationJsonSchema = {
   }
 };
 
+const copilotDraftJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["summary", "replyVariants", "reviewReasons"],
+  properties: {
+    summary: {
+      type: "string"
+    },
+    replyVariants: {
+      type: "array",
+      minItems: 1,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["tone", "subject", "body", "citationChunkIds"],
+        properties: {
+          tone: {
+            type: "string",
+            enum: replyToneValues
+          },
+          subject: {
+            type: "string"
+          },
+          body: {
+            type: "string"
+          },
+          citationChunkIds: {
+            type: "array",
+            items: {
+              type: "string"
+            }
+          }
+        }
+      }
+    },
+    reviewReasons: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: reviewReasonValues
+      }
+    }
+  }
+};
+
 export class OpenAiTicketClassifierProvider {
   constructor({
     apiKey,
@@ -92,6 +142,28 @@ export class OpenAiTicketClassifierProvider {
   }
 
   async classifyTicket({ prompt }) {
+    const parsed = await this.requestStructuredOutput({
+      prompt,
+      schemaName: "ticket_classification",
+      schema: classificationJsonSchema,
+      errorLabel: "classification"
+    });
+
+    return classificationResponseSchema.parse(parsed);
+  }
+
+  async generateReplyVariants({ prompt }) {
+    const parsed = await this.requestStructuredOutput({
+      prompt,
+      schemaName: "copilot_draft",
+      schema: copilotDraftJsonSchema,
+      errorLabel: "copilot draft"
+    });
+
+    return copilotDraftResponseSchema.parse(parsed);
+  }
+
+  async requestStructuredOutput({ prompt, schemaName, schema, errorLabel }) {
     const response = await this.fetchImpl(this.endpoint, {
       method: "POST",
       headers: {
@@ -104,22 +176,21 @@ export class OpenAiTicketClassifierProvider {
         text: {
           format: {
             type: "json_schema",
-            name: "ticket_classification",
+            name: schemaName,
             strict: true,
-            schema: classificationJsonSchema
+            schema
           }
         }
       })
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI classification request failed with status ${response.status}`);
+      throw new Error(`OpenAI ${errorLabel} request failed with status ${response.status}`);
     }
 
     const payload = await response.json();
-    const parsed = parseOpenAiStructuredOutput(payload);
 
-    return classificationResponseSchema.parse(parsed);
+    return parseOpenAiStructuredOutput(payload);
   }
 }
 

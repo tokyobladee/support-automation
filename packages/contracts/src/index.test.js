@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   classificationResponseSchema,
+  copilotResponseSchema,
   knowledgeDocumentInputSchema,
   knowledgeSearchRequestSchema,
   ticketIntakeSchema
@@ -78,5 +79,55 @@ describe("knowledge contracts", () => {
 
     assert.equal(result.topK, 5);
     assert.deepEqual(result.tags, []);
+  });
+});
+
+describe("copilot contracts", () => {
+  it("accepts structured copilot responses", () => {
+    const result = copilotResponseSchema.parse({
+      summary: "The customer wants help cancelling before renewal.",
+      replyVariants: [
+        {
+          tone: "formal",
+          subject: "Subscription cancellation",
+          body: "Hello, you can cancel from Account Settings before renewal.",
+          citationChunkIds: ["chunk-subscription"]
+        }
+      ],
+      reviewReasons: [],
+      classification: {
+        category: "subscription",
+        priority: "normal",
+        automationEligibility: "safe_to_suggest",
+        confidence: 0.91,
+        recommendedNextStep: "Send cancellation guidance.",
+        rationale: "The ticket asks about cancelling a subscription.",
+        reviewReasons: [],
+        evidence: [
+          {
+            quote: "I want to cancel",
+            reason: "Cancellation request"
+          }
+        ]
+      },
+      citations: [
+        {
+          documentId: "doc-subscription",
+          chunkId: "chunk-subscription",
+          title: "Subscription Cancellation Playbook",
+          source: "support-playbook",
+          sourceUri: "https://internal.example.com/support/subscription-cancellation",
+          version: "2026-08",
+          language: "en",
+          position: 0,
+          quote: "Customers can cancel subscriptions from Account Settings.",
+          relevanceScore: 0.9,
+          tags: ["subscription"]
+        }
+      ],
+      automationEligibility: "safe_to_suggest"
+    });
+
+    assert.equal(result.replyVariants[0].tone, "formal");
   });
 });

@@ -93,3 +93,28 @@ export const knowledgeSearchResponseSchema = z.object({
   query: z.string().trim().min(1),
   citations: z.array(knowledgeCitationSchema)
 });
+
+export const replyToneValues = Object.freeze(["formal", "empathetic", "concise"]);
+
+export const copilotRequestSchema = classificationRequestSchema.extend({
+  topK: z.number().int().min(1).max(10).default(5)
+});
+
+export const replyVariantSchema = z.object({
+  tone: z.enum(replyToneValues),
+  subject: z.string().trim().min(1).max(240),
+  body: z.string().trim().min(1).max(4000),
+  citationChunkIds: z.array(z.string().trim().min(1))
+});
+
+export const copilotDraftResponseSchema = z.object({
+  summary: z.string().trim().min(1).max(2000),
+  replyVariants: z.array(replyVariantSchema).min(1).max(3),
+  reviewReasons: z.array(z.enum(reviewReasonValues))
+});
+
+export const copilotResponseSchema = copilotDraftResponseSchema.extend({
+  classification: classificationResponseSchema,
+  citations: z.array(knowledgeCitationSchema),
+  automationEligibility: z.enum(automationEligibilityValues)
+});

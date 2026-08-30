@@ -27,6 +27,31 @@ const validClassification = {
   ]
 };
 
+const validCopilotDraft = {
+  summary: "The customer wants to cancel before renewal.",
+  replyVariants: [
+    {
+      tone: "formal",
+      subject: "Subscription cancellation",
+      body: "Hello, you can cancel from Account Settings before renewal.",
+      citationChunkIds: ["chunk-subscription"]
+    },
+    {
+      tone: "empathetic",
+      subject: "Subscription cancellation",
+      body: "Hi, I understand you want to avoid another renewal charge.",
+      citationChunkIds: ["chunk-subscription"]
+    },
+    {
+      tone: "concise",
+      subject: "Subscription cancellation",
+      body: "Hi, go to Account Settings to cancel before renewal.",
+      citationChunkIds: ["chunk-subscription"]
+    }
+  ],
+  reviewReasons: []
+};
+
 describe("OpenAiTicketClassifierProvider", () => {
   it("sends a structured output request and parses the classification", async () => {
     let capturedRequest;
@@ -96,6 +121,48 @@ describe("OpenAiTicketClassifierProvider", () => {
         }),
       /status 429/
     );
+  });
+
+  it("sends a structured copilot draft request", async () => {
+    let capturedRequest;
+    const provider = new OpenAiTicketClassifierProvider({
+      apiKey: "test-key",
+      model: "test-model",
+      fetchImpl: async (url, request) => {
+        capturedRequest = {
+          url,
+          request,
+          body: JSON.parse(request.body)
+        };
+
+        return {
+          ok: true,
+          json: async () => ({
+            output_text: JSON.stringify(validCopilotDraft)
+          })
+        };
+      }
+    });
+
+    const result = await provider.generateReplyVariants({
+      prompt: {
+        messages: [
+          {
+            role: "system",
+            content: "Draft replies."
+          },
+          {
+            role: "user",
+            content: "Ticket context."
+          }
+        ]
+      }
+    });
+
+    assert.equal(result.replyVariants.length, 3);
+    assert.equal(capturedRequest.url, "https://api.openai.com/v1/responses");
+    assert.equal(capturedRequest.body.text.format.name, "copilot_draft");
+    assert.equal(capturedRequest.body.text.format.schema.additionalProperties, false);
   });
 });
 

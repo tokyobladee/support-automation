@@ -121,3 +121,43 @@ describe("knowledge routes", () => {
     assert.equal(body.error.issues[0].path, "query");
   });
 });
+
+describe("copilot route", () => {
+  it("creates a cited copilot draft", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/copilot/drafts",
+      payload: {
+        text: "I was charged twice and want a refund.",
+        source: "manual"
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 201);
+    assert.equal(body.data.replyVariants.length, 3);
+    assert.equal(body.data.citations.length > 0, true);
+    assert.equal(body.data.automationEligibility, "automation_blocked");
+    assert.equal(body.meta.aiRun.provider, "mock");
+  });
+
+  it("returns validation errors for invalid copilot requests", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/copilot/drafts",
+      payload: {
+        text: "",
+        source: "manual"
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.equal(body.error.issues[0].path, "text");
+  });
+});
