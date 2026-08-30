@@ -24,7 +24,7 @@ export function recordValidationErrorMetrics(metricsRecorder, { route, error }) 
 
 export function recordRetrievalMetrics(metricsRecorder, result) {
   metricsRecorder.recordRetrieval({
-    query: result.query,
+    queryLength: result.query.length,
     resultCount: result.citations.length
   });
 }

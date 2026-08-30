@@ -30,6 +30,7 @@ import {
 } from "@support/retrieval";
 import { createAuthContext } from "./auth.js";
 import { env } from "./env.js";
+import { createLoggerOptions } from "./logger.js";
 import { registerAuditRoutes } from "./routes/audit.js";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerClassificationRoutes } from "./routes/classifications.js";
@@ -419,7 +420,7 @@ async function registerRequestTracing(app, traceRecorder) {
 
 export async function buildApp(options = {}) {
   const app = Fastify({
-    logger: true
+    logger: options.logger ?? createLoggerOptions()
   });
   const traceRecorder =
     options.traceRecorder ??

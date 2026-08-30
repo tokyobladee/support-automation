@@ -160,7 +160,7 @@ function formatEventDetails(event) {
   return [
     event.payload.decision,
     event.payload.tone,
-    event.payload.reason,
+    event.payload.hasReason ? `reason ${event.payload.reasonLength} chars` : undefined,
     event.payload.hasEditedContent ? "edited" : undefined
   ]
     .filter(Boolean)

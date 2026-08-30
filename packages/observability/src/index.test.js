@@ -20,6 +20,7 @@ describe("InMemoryMetricsRecorder", () => {
       route: "POST /v1/classifications"
     });
     recorder.recordRetrieval({
+      queryLength: 24,
       resultCount: 2
     });
     recorder.recordRetrieval({

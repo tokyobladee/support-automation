@@ -20,6 +20,7 @@ export async function recordHumanDecisionAuditEvent(auditLog, feedback) {
     decision: feedback.decision,
     tone: feedback.tone,
     hasEditedContent: Boolean(feedback.editedContent),
-    reason: feedback.reason
+    hasReason: Boolean(feedback.reason),
+    reasonLength: feedback.reason?.length ?? 0
   });
 }
