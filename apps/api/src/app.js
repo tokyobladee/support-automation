@@ -56,7 +56,9 @@ function createAiProvider({ traceRecorder }) {
   const provider = createTicketClassifierProvider({
     providerName: env.AI_PROVIDER,
     openAiApiKey: env.OPENAI_API_KEY,
-    openAiModel: env.OPENAI_CLASSIFICATION_MODEL
+    openAiModel: env.OPENAI_CLASSIFICATION_MODEL,
+    geminiApiKey: env.GEMINI_API_KEY,
+    geminiModel: env.GEMINI_CLASSIFICATION_MODEL
   });
 
   return instrumentMethods({

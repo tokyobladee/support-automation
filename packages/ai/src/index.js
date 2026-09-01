@@ -20,6 +20,10 @@ export {
   OpenAiTicketClassifierProvider,
   parseOpenAiStructuredOutput
 } from "./openai-ticket-classifier-provider.js";
+export {
+  GeminiTicketClassifierProvider,
+  parseGeminiStructuredOutput
+} from "./gemini-ticket-classifier-provider.js";
 export { createTicketClassifierProvider } from "./ticket-classifier-provider-factory.js";
 export { InMemoryClassificationRepository } from "./in-memory-classification-repository.js";
 export { InMemoryCopilotRepository } from "./in-memory-copilot-repository.js";

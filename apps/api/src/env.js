@@ -26,8 +26,9 @@ const envSchema = z.object({
   DEFAULT_AGENT_ROLE: z.enum(["agent", "lead", "admin"]).default("admin"),
   AUTH_MODE: z.enum(["disabled", "headers"]).default("disabled"),
   TRACING_PROVIDER: z.enum(["none", "opentelemetry"]).default("none"),
-  AI_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
+  AI_PROVIDER: z.enum(["mock", "openai", "gemini"]).default("mock"),
   OPENAI_CLASSIFICATION_MODEL: z.string().min(1).default("gpt-5.6"),
+  GEMINI_CLASSIFICATION_MODEL: z.string().min(1).default("gemini-2.5-flash"),
   EMBEDDING_PROVIDER: z.enum(["hash", "openai"]).default("hash"),
   OPENAI_EMBEDDING_MODEL: z.string().min(1).default("text-embedding-3-small"),
   OPENAI_EMBEDDING_DIMENSIONS: optionalPositiveInteger,
@@ -36,7 +37,8 @@ const envSchema = z.object({
     .min(1)
     .default("postgresql://support:support@localhost:5432/support_ai_copilot"),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
-  OPENAI_API_KEY: z.string().optional()
+  OPENAI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional()
 }).superRefine((value, context) => {
   if (value.NODE_ENV === "production" && value.AUTH_MODE === "disabled") {
     context.addIssue({
@@ -58,11 +60,11 @@ const envSchema = z.object({
     });
   }
 
-  if (value.AI_PROVIDER !== "openai") {
+  if (!["openai", "gemini"].includes(value.AI_PROVIDER)) {
     context.addIssue({
       code: "custom",
       path: ["AI_PROVIDER"],
-      message: "AI_PROVIDER must be openai in production"
+      message: "AI_PROVIDER must be openai or gemini in production"
     });
   }
 
@@ -82,11 +84,19 @@ const envSchema = z.object({
     });
   }
 
-  if (!value.OPENAI_API_KEY) {
+  if (value.AI_PROVIDER === "openai" && !value.OPENAI_API_KEY) {
     context.addIssue({
       code: "custom",
       path: ["OPENAI_API_KEY"],
       message: "OPENAI_API_KEY is required in production"
+    });
+  }
+
+  if (value.AI_PROVIDER === "gemini" && !value.GEMINI_API_KEY) {
+    context.addIssue({
+      code: "custom",
+      path: ["GEMINI_API_KEY"],
+      message: "GEMINI_API_KEY is required in production"
     });
   }
 });

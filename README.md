@@ -15,7 +15,7 @@ The product is built as an operational support workspace, not a marketing demo. 
 - Agent feedback capture for accepted, rejected, escalated, edited, and bad-output decisions.
 - PostgreSQL persistence through Prisma, with `pgvector` for embeddings.
 - Local fallback providers for free deterministic testing.
-- OpenAI adapters for real classification, reply generation, and embeddings when API quota is available.
+- OpenAI and Gemini adapters for real classification and reply generation when API quota is available.
 
 ## Architecture
 
@@ -25,7 +25,7 @@ The repository uses a JavaScript ESM monorepo with Clean Architecture boundaries
 - `apps/web` - Next.js support operations UI.
 - `packages/domain` - domain taxonomy, priorities, automation eligibility, review policy.
 - `packages/contracts` - shared Zod schemas for API requests and responses.
-- `packages/ai` - prompt builders, AI provider ports, OpenAI adapter, mock adapter, classification and copilot use cases.
+- `packages/ai` - prompt builders, AI provider ports, OpenAI adapter, Gemini adapter, mock adapter, classification and copilot use cases.
 - `packages/retrieval` - seeded knowledge documents, chunking, embeddings, hybrid retrieval, citation assembly.
 - `packages/database` - Prisma schema, migrations, PostgreSQL repositories, pgvector index adapter.
 - `packages/auth` - auth context and role permissions.
@@ -82,6 +82,17 @@ OPENAI_API_KEY=...
 OPENAI_CLASSIFICATION_MODEL=gpt-4.1-mini
 ```
 
+For real Gemini classification and reply generation, while keeping local embeddings:
+
+```env
+AI_PROVIDER=gemini
+EMBEDDING_PROVIDER=hash
+GEMINI_API_KEY=...
+GEMINI_CLASSIFICATION_MODEL=gemini-2.5-flash
+```
+
+Make sure the Gemini API (`generativelanguage.googleapis.com`) is enabled for the Google Cloud project that owns the key.
+
 For full OpenAI mode:
 
 ```env
@@ -93,6 +104,8 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
 
 OpenAI API usage is billed separately from ChatGPT subscriptions. A ChatGPT Plus subscription does not automatically include API credits. If OpenAI returns `429`, the key is being rate-limited or has no available API quota.
+
+Gemini can be used as the real AI provider for classification and copilot drafts. Embeddings can stay local with `EMBEDDING_PROVIDER=hash`, or use OpenAI embeddings if OpenAI API quota is available.
 
 ## Run Locally
 
@@ -326,14 +339,16 @@ Production validation requires:
 - `PERSISTENCE_PROVIDER=prisma`
 - `AUTH_MODE=headers`
 - `AI_PROVIDER=openai`
+- `AI_PROVIDER=gemini` is also supported for real classification and reply generation.
 - `EMBEDDING_PROVIDER=openai`
 - `TRACING_PROVIDER=opentelemetry`
-- `OPENAI_API_KEY` set
+- `OPENAI_API_KEY` set when using OpenAI
+- `GEMINI_API_KEY` set when using Gemini
 
 The local demo can run with `AUTH_MODE=disabled`, but production must use authenticated headers or a real auth integration.
 
 ## Current Limitations
 
 - The seeded knowledge base is generated demo content, not real company policy.
-- Real OpenAI execution requires API billing or credits and may fail with `429` when quota is unavailable.
+- Real OpenAI or Gemini execution requires provider API quota and may fail with `429` when quota is unavailable.
 - External CRM, Slack, webhook, and ticketing integrations are represented as source types and architecture boundaries, not live third-party connectors.
