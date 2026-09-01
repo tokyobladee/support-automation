@@ -99,8 +99,8 @@ export class PrismaKnowledgeRepository {
   async refreshSearchText(documentId) {
     await this.context.prisma.$executeRawUnsafe(
       `UPDATE knowledge_chunks
-       SET search_text = to_tsvector('simple', content)
-       WHERE document_id = $1`,
+       SET "searchText" = to_tsvector('simple', content)
+       WHERE "documentId" = $1`,
       documentId
     );
   }
@@ -140,11 +140,11 @@ export class PrismaPgVectorIndex extends VectorIndex {
         dimensions: this.dimensions,
         chunkId: chunk.id
       });
-      await this.context.prisma.$executeRawUnsafe(
-        `UPDATE knowledge_chunks
-         SET embedding = $1::vector,
-             search_text = to_tsvector('simple', content)
-         WHERE id = $2`,
+    await this.context.prisma.$executeRawUnsafe(
+      `UPDATE knowledge_chunks
+       SET embedding = $1::vector,
+           "searchText" = to_tsvector('simple', content)
+       WHERE id = $2`,
         toVectorLiteral(chunk.embedding),
         chunk.id
       );
@@ -211,36 +211,36 @@ function buildKeywordSearchSql(request) {
 
   return `SELECT
       c.id,
-      c.document_id AS "documentId",
+      c."documentId" AS "documentId",
       c.position,
       c.content,
-      c.content_hash AS "contentHash",
-      c.token_count AS "tokenCount",
+      c."contentHash" AS "contentHash",
+      c."tokenCount" AS "tokenCount",
       c.metadata,
       d.id AS "document.id",
       d.title AS "document.title",
       d.source AS "document.source",
-      d.source_uri AS "document.sourceUri",
+      d."sourceUri" AS "document.sourceUri",
       d.version AS "document.version",
       d.language AS "document.language",
       d.visibility AS "document.visibility",
       d.tags AS "document.tags",
-      d.content_hash AS "document.contentHash",
-      d.valid_from AS "document.validFrom",
-      d.valid_until AS "document.validUntil",
+      d."contentHash" AS "document.contentHash",
+      d."validFrom" AS "document.validFrom",
+      d."validUntil" AS "document.validUntil",
       LEAST(1, ts_rank_cd(
         setweight(to_tsvector('simple', d.title), 'A') ||
         setweight(to_tsvector('simple', array_to_string(d.tags, ' ')), 'B') ||
-        setweight(coalesce(c.search_text, to_tsvector('simple', c.content)), 'C'),
+        setweight(coalesce(c."searchText", to_tsvector('simple', c.content)), 'C'),
         websearch_to_tsquery('simple', $1)
       ) * 8) AS score
     FROM knowledge_chunks c
-    INNER JOIN knowledge_documents d ON d.id = c.document_id
-    WHERE d.organization_id = $2
+    INNER JOIN knowledge_documents d ON d.id = c."documentId"
+    WHERE d."organizationId" = $2
       AND (
         setweight(to_tsvector('simple', d.title), 'A') ||
         setweight(to_tsvector('simple', array_to_string(d.tags, ' ')), 'B') ||
-        setweight(coalesce(c.search_text, to_tsvector('simple', c.content)), 'C')
+        setweight(coalesce(c."searchText", to_tsvector('simple', c.content)), 'C')
       ) @@ websearch_to_tsquery('simple', $1)
       ${filters.sql}
     ORDER BY score DESC, c.position ASC
@@ -252,28 +252,28 @@ function buildVectorSearchSql(input) {
 
   return `SELECT
       c.id,
-      c.document_id AS "documentId",
+      c."documentId" AS "documentId",
       c.position,
       c.content,
-      c.content_hash AS "contentHash",
-      c.token_count AS "tokenCount",
+      c."contentHash" AS "contentHash",
+      c."tokenCount" AS "tokenCount",
       c.metadata,
       d.id AS "document.id",
       d.title AS "document.title",
       d.source AS "document.source",
-      d.source_uri AS "document.sourceUri",
+      d."sourceUri" AS "document.sourceUri",
       d.version AS "document.version",
       d.language AS "document.language",
       d.visibility AS "document.visibility",
       d.tags AS "document.tags",
-      d.content_hash AS "document.contentHash",
-      d.valid_from AS "document.validFrom",
-      d.valid_until AS "document.validUntil",
+      d."contentHash" AS "document.contentHash",
+      d."validFrom" AS "document.validFrom",
+      d."validUntil" AS "document.validUntil",
       GREATEST(0, 1 - (c.embedding <=> $1::vector)) AS score
     FROM knowledge_chunks c
-    INNER JOIN knowledge_documents d ON d.id = c.document_id
+    INNER JOIN knowledge_documents d ON d.id = c."documentId"
     WHERE c.embedding IS NOT NULL
-      AND d.organization_id = $2
+      AND d."organizationId" = $2
       ${filters.sql}
     ORDER BY c.embedding <=> $1::vector ASC
     LIMIT $${filters.nextIndex}`;

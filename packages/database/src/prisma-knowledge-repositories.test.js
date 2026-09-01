@@ -56,7 +56,7 @@ describe("PrismaKnowledgeRepository", () => {
     assert.equal(savedDocument.id, "doc-1");
     assert.equal(savedDocument.chunks[0].id, "chunk-1");
     assert.equal(calls[3].args.data[0].metadata.section, "money movement");
-    assert.match(calls[4].args[0], /to_tsvector\('simple', content\)/u);
+    assert.match(calls[4].args[0], /"searchText" = to_tsvector\('simple', content\)/u);
   });
 
   it("lists chunks with document metadata for citation assembly", async () => {
