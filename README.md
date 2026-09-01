@@ -103,7 +103,7 @@ OPENAI_CLASSIFICATION_MODEL=gpt-4.1-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
 
-OpenAI API usage is billed separately from ChatGPT subscriptions. A ChatGPT Plus subscription does not automatically include API credits. If OpenAI returns `429`, the key is being rate-limited or has no available API quota.
+Gemini can be used as the real AI provider for classification and copilot drafts. Embeddings can stay local with `EMBEDDING_PROVIDER=hash`, or use OpenAI embeddings if OpenAI API quota is available.
 
 Gemini can be used as the real AI provider for classification and copilot drafts. Embeddings can stay local with `EMBEDDING_PROVIDER=hash`, or use OpenAI embeddings if OpenAI API quota is available.
 
@@ -346,9 +346,3 @@ Production validation requires:
 - `GEMINI_API_KEY` set when using Gemini
 
 The local demo can run with `AUTH_MODE=disabled`, but production must use authenticated headers or a real auth integration.
-
-## Current Limitations
-
-- The seeded knowledge base is generated demo content, not real company policy.
-- Real OpenAI or Gemini execution requires provider API quota and may fail with `429` when quota is unavailable.
-- External CRM, Slack, webhook, and ticketing integrations are represented as source types and architecture boundaries, not live third-party connectors.
