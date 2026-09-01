@@ -1,4 +1,13 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { config } from "dotenv";
 import { z } from "zod";
+
+const currentDir = dirname(fileURLToPath(import.meta.url));
+
+if (process.env.SUPPORT_LOAD_ENV_FILE !== "false") {
+  config({ path: resolve(currentDir, "../../../.env"), quiet: true });
+}
 
 const optionalPositiveInteger = z.preprocess(
   (value) => (value === "" ? undefined : value),

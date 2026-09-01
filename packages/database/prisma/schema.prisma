@@ -198,7 +198,7 @@ model KnowledgeDocument {
   organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   chunks         KnowledgeChunk[]
 
-  @@unique([organizationId, source, version])
+  @@unique([organizationId, source, version, title])
   @@index([organizationId, visibility])
   @@index([organizationId, language])
   @@map("knowledge_documents")

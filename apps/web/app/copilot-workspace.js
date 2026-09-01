@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { draftCopilotReply, submitAgentFeedback } from "../lib/api-client.js";
+import { webEnv } from "../lib/env.js";
 
 const sampleTickets = [
   {
@@ -17,6 +18,8 @@ const sampleTickets = [
     text: "The app crashes every time I upload a screenshot from Android."
   }
 ];
+
+const showSampleTickets = webEnv.NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS;
 
 const actionLabels = {
   draft: "Draft",
@@ -149,18 +152,20 @@ export function CopilotWorkspace() {
           />
         </label>
 
-        <div className="sample-row">
-          {sampleTickets.map((sample) => (
-            <button
-              className="sample-button"
-              key={sample.label}
-              type="button"
-              onClick={() => setTicketText(sample.text)}
-            >
-              {sample.label}
-            </button>
-          ))}
-        </div>
+        {showSampleTickets ? (
+          <div className="sample-row">
+            {sampleTickets.map((sample) => (
+              <button
+                className="sample-button"
+                key={sample.label}
+                type="button"
+                onClick={() => setTicketText(sample.text)}
+              >
+                {sample.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {error ? <div className="error-banner">{error}</div> : null}
 

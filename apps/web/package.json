@@ -14,10 +14,10 @@
   "dependencies": {
     "@support/contracts": "workspace:*",
     "@support/domain": "workspace:*",
+    "dotenv": "^17.4.2",
     "next": "^16.0.10",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "zod": "^4.1.13"
-  },
-  "devDependencies": {}
+  }
 }

@@ -7,6 +7,15 @@ describe("web environment validation", () => {
     const env = parseWebEnv({});
 
     assert.equal(env.NEXT_PUBLIC_API_BASE_URL, "http://localhost:4000");
+    assert.equal(env.NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS, false);
+  });
+
+  it("accepts an explicit sample ticket flag", () => {
+    const env = parseWebEnv({
+      NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS: "true"
+    });
+
+    assert.equal(env.NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS, true);
   });
 
   it("rejects invalid API base URLs", () => {

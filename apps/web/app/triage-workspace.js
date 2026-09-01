@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { classifyTicket } from "../lib/api-client.js";
+import { webEnv } from "../lib/env.js";
 
 const sampleTickets = [
   {
@@ -17,6 +18,8 @@ const sampleTickets = [
     text: "I cannot log in, my plan renewed today, and I also want my money back."
   }
 ];
+
+const showSampleTickets = webEnv.NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS;
 
 const eligibilityLabels = {
   safe_to_suggest: "Safe to suggest",
@@ -140,18 +143,20 @@ export function TriageWorkspace() {
           />
         </label>
 
-        <div className="sample-row">
-          {sampleTickets.map((sample) => (
-            <button
-              className="sample-button"
-              key={sample.label}
-              type="button"
-              onClick={() => setTicketText(sample.text)}
-            >
-              {sample.label}
-            </button>
-          ))}
-        </div>
+        {showSampleTickets ? (
+          <div className="sample-row">
+            {sampleTickets.map((sample) => (
+              <button
+                className="sample-button"
+                key={sample.label}
+                type="button"
+                onClick={() => setTicketText(sample.text)}
+              >
+                {sample.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {error ? <div className="error-banner">{error}</div> : null}
 

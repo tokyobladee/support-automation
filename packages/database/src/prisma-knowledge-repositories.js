@@ -11,11 +11,7 @@ export class PrismaKnowledgeRepository {
     const organization = await this.context.getOrganization();
     const savedDocument = await this.context.prisma.knowledgeDocument.upsert({
       where: {
-        organizationId_source_version: {
-          organizationId: organization.id,
-          source: document.source,
-          version: document.version
-        }
+        id: document.id
       },
       update: toDocumentData({ organizationId: organization.id, document }),
       create: {
