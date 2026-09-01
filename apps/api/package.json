@@ -1,0 +1,27 @@
+{
+  "name": "@support/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "build": "node --check src/server.js",
+    "lint": "eslint .",
+    "test": "node --import ./src/test-env.js --test",
+    "schema:check": "node src/env.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.1",
+    "@support/ai": "workspace:*",
+    "@support/audit": "workspace:*",
+    "@support/auth": "workspace:*",
+    "@support/contracts": "workspace:*",
+    "@support/database": "workspace:*",
+    "@support/observability": "workspace:*",
+    "@support/retrieval": "workspace:*",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.6.2",
+    "zod": "^4.1.13"
+  }
+}

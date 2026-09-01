@@ -1,0 +1,35 @@
+{
+  "name": "support-ai-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @support/api --filter @support/web dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "pnpm -r --if-present test",
+    "schema:check": "pnpm -r --if-present schema:check",
+    "eval": "pnpm --filter @support/testing eval",
+    "eval:classification": "pnpm --filter @support/testing eval:classification",
+    "search:knowledge": "pnpm --filter @support/retrieval search:knowledge",
+    "db:generate": "pnpm --filter @support/database db:generate",
+    "db:migrate": "pnpm --filter @support/database db:migrate",
+    "db:studio": "pnpm --filter @support/database db:studio",
+    "dev:web": "pnpm --filter @support/web dev",
+    "dev:api": "pnpm --filter @support/api dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4"
+  }
+}
