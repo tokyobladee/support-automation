@@ -33,16 +33,26 @@ const viewTitles = {
   audit: "Audit Log"
 };
 
-const viewComponents = {
-  triage: TriageWorkspace,
-  copilot: CopilotWorkspace,
-  knowledge: KnowledgeWorkspace,
-  audit: AuditWorkspace
-};
-
 export function OperationsWorkspace() {
   const [activeView, setActiveView] = useState("triage");
+  const [visitedViews, setVisitedViews] = useState(() => new Set(["triage"]));
   const [session, setSession] = useState(null);
+  const [copilotTicket, setCopilotTicket] = useState(null);
+
+  function activateView(viewId) {
+    setVisitedViews((currentViews) =>
+      currentViews.has(viewId) ? currentViews : new Set([...currentViews, viewId])
+    );
+    setActiveView(viewId);
+  }
+
+  function handleDraftInCopilot(ticket) {
+    setCopilotTicket({
+      ...ticket,
+      transferId: globalThis.crypto?.randomUUID?.() ?? String(Date.now())
+    });
+    activateView("copilot");
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -80,9 +90,10 @@ export function OperationsWorkspace() {
             {views.map((view) => (
               <button
                 data-active={view.id === activeView}
+                id={`workspace-tab-${view.id}`}
                 key={view.id}
                 type="button"
-                onClick={() => setActiveView(view.id)}
+                onClick={() => activateView(view.id)}
               >
                 {view.label}
               </button>
@@ -95,7 +106,35 @@ export function OperationsWorkspace() {
         </div>
       </header>
 
-      {createElement(viewComponents[activeView])}
+      <div className="workspace-views">
+        {views.map((view) => {
+          if (!visitedViews.has(view.id)) {
+            return null;
+          }
+
+          return (
+            <section
+              aria-labelledby={`workspace-tab-${view.id}`}
+              className="workspace-view"
+              hidden={view.id !== activeView}
+              key={view.id}
+            >
+              {view.id === "triage"
+                ? createElement(TriageWorkspace, {
+                    onDraftInCopilot: handleDraftInCopilot
+                  })
+                : null}
+              {view.id === "copilot"
+                ? createElement(CopilotWorkspace, {
+                    incomingTicket: copilotTicket
+                  })
+                : null}
+              {view.id === "knowledge" ? createElement(KnowledgeWorkspace) : null}
+              {view.id === "audit" ? createElement(AuditWorkspace) : null}
+            </section>
+          );
+        })}
+      </div>
     </main>
   );
 }

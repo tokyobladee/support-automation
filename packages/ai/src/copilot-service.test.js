@@ -60,7 +60,10 @@ describe("CopilotService", () => {
     assert.equal(result.result.replyVariants.length, 3);
     assert.deepEqual(tones, ["formal", "empathetic", "concise"]);
     assert.equal(result.result.citations.length > 0, true);
-    assert.equal(result.result.replyVariants.every((variant) => variant.citationChunkIds.length > 0), true);
+    assert.equal(
+      result.result.replyVariants.every((variant) => variant.citationChunkIds.length > 0),
+      true
+    );
     assert.equal(repository.all().length, 1);
   });
 
@@ -120,5 +123,42 @@ describe("CopilotService", () => {
 
     assert.equal(result.result.citations.length, 0);
     assert.equal(result.result.reviewReasons.includes("missing_knowledge_citation"), true);
+  });
+
+  it("reuses a provided triage classification instead of classifying again", async () => {
+    const provider = new MockTicketClassifierProvider();
+    const classificationService = {
+      async classify() {
+        throw new Error("Classification should not run when a triage result is provided");
+      }
+    };
+    const service = new CopilotService({
+      classificationService,
+      provider,
+      knowledgeRetriever: createKnowledgeRetriever()
+    });
+
+    const result = await service.draftReply({
+      text: "I was charged twice and want a refund.",
+      source: "manual",
+      classification: {
+        category: "refund_request",
+        priority: "high",
+        automationEligibility: "automation_blocked",
+        confidence: 0.95,
+        recommendedNextStep: "Send to a human agent for refund-policy review.",
+        rationale: "The customer asks for a refund.",
+        reviewReasons: ["financial_decision"],
+        evidence: [
+          {
+            quote: "I was charged twice and want a refund.",
+            reason: "Refund request"
+          }
+        ]
+      }
+    });
+
+    assert.equal(result.result.classification.category, "refund_request");
+    assert.equal(result.result.automationEligibility, "automation_blocked");
   });
 });

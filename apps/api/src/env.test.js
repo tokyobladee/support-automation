@@ -57,6 +57,6 @@ describe("API environment validation", () => {
     });
 
     assert.equal(env.AI_PROVIDER, "gemini");
-    assert.equal(env.GEMINI_CLASSIFICATION_MODEL, "gemini-2.5-flash");
+    assert.equal(env.GEMINI_CLASSIFICATION_MODEL, "gemini-3.6-flash");
   });
 });

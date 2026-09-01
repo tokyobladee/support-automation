@@ -1,140 +1,82 @@
 # Support AI Copilot
 
-Production-oriented AI support automation platform for ticket triage, internal knowledge retrieval, reply drafting, human review, and auditability.
+Support AI Copilot is a web application for support teams. It helps classify incoming tickets, find relevant knowledge-base material, draft customer replies, and keep risky decisions under human review.
 
-The product is built as an operational support workspace, not a marketing demo. AI is kept behind replaceable provider adapters, every model output is validated with schemas, risky decisions are blocked or routed to humans, and AI runs expose evidence, confidence, citations, review state, and audit history.
+## What Is Inside
 
-## What Is Included
+- `Triage` - classifies a ticket by category, priority, confidence, evidence, and automation eligibility.
+- `Copilot` - prepares a ticket summary and reply variants using the knowledge base.
+- `Knowledge Base` - shows seeded support documents and searchable cited chunks.
+- `Audit Log` - shows AI runs and human review decisions.
 
-- Ticket triage for support requests from `manual`, `api`, `webhook`, `slack`, and `crm` sources.
-- Domain categories for `subscription`, `bug`, `expert_complaint`, `refund_request`, `account_access`, `billing`, `product_guidance`, `mixed`, and `unknown`.
-- Automation policy that blocks or flags low-confidence, financial, privacy, legal, account ownership, VIP, aggressive, mixed-topic, and policy-sensitive cases.
-- Agent Copilot flow that classifies a ticket, retrieves relevant knowledge, drafts formal, empathetic, and concise reply variants, and requires citations for policy-sensitive claims.
-- Knowledge Base with seeded demo policy/playbook documents, chunking, full-text search, vector search support, and citation assembly.
-- Audit Log for AI runs and human decisions.
-- Agent feedback capture for accepted, rejected, escalated, edited, and bad-output decisions.
-- PostgreSQL persistence through Prisma, with `pgvector` for embeddings.
-- Local fallback providers for free deterministic testing.
-- OpenAI and Gemini adapters for real classification and reply generation when API quota is available.
-
-## Architecture
-
-The repository uses a JavaScript ESM monorepo with Clean Architecture boundaries:
-
-- `apps/api` - Fastify API, route composition, auth context, persistence wiring, observability wiring.
-- `apps/web` - Next.js support operations UI.
-- `packages/domain` - domain taxonomy, priorities, automation eligibility, review policy.
-- `packages/contracts` - shared Zod schemas for API requests and responses.
-- `packages/ai` - prompt builders, AI provider ports, OpenAI adapter, Gemini adapter, mock adapter, classification and copilot use cases.
-- `packages/retrieval` - seeded knowledge documents, chunking, embeddings, hybrid retrieval, citation assembly.
-- `packages/database` - Prisma schema, migrations, PostgreSQL repositories, pgvector index adapter.
-- `packages/auth` - auth context and role permissions.
-- `packages/audit` - audit event abstractions.
-- `packages/observability` - metrics and tracing helpers.
-- `packages/testing` - deterministic eval runner and fixtures.
-
-Domain and use-case code do not depend on the UI, database, queues, or provider SDKs. External providers are selected through factories and ports such as ticket classifier and embedding provider adapters.
+The app can run with a local mock AI provider for free testing, or with a real Gemini/OpenAI API key.
 
 ## Requirements
 
 - Node.js `>=24`
 - pnpm `>=11`
-- Docker Desktop or compatible Docker engine
+- Docker Desktop, only if you want to run PostgreSQL/Redis locally
 
-## Environment
-
-Create a local `.env` from `.env.example`:
+## Install
 
 Windows PowerShell:
 
 ```powershell
+pnpm install
 Copy-Item .env.example .env
 ```
 
 Linux/macOS:
 
 ```bash
+pnpm install
 cp .env.example .env
 ```
 
-The API and web app read the root `.env`.
+## Environment
 
-For free local testing:
+Edit the root `.env` file.
+
+### Free Local Mode
+
+This mode does not call Gemini or OpenAI.
 
 ```env
-NODE_ENV=development
-PERSISTENCE_PROVIDER=prisma
-AUTH_MODE=disabled
 AI_PROVIDER=mock
 EMBEDDING_PROVIDER=hash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+PERSISTENCE_PROVIDER=memory
 NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS=false
-DATABASE_URL=postgresql://support:support@localhost:5432/support_ai_copilot
-REDIS_URL=redis://localhost:6379
 ```
 
-For real OpenAI classification and reply generation, while keeping local embeddings:
+### Gemini Mode
 
-```env
-AI_PROVIDER=openai
-EMBEDDING_PROVIDER=hash
-OPENAI_API_KEY=...
-OPENAI_CLASSIFICATION_MODEL=gpt-4.1-mini
-```
-
-For real Gemini classification and reply generation, while keeping local embeddings:
+Use this if you have a Gemini API key.
 
 ```env
 AI_PROVIDER=gemini
+GEMINI_API_KEY=your_key_here
+GEMINI_CLASSIFICATION_MODEL=gemini-3.6-flash
 EMBEDDING_PROVIDER=hash
-GEMINI_API_KEY=...
-GEMINI_CLASSIFICATION_MODEL=gemini-2.5-flash
+PERSISTENCE_PROVIDER=memory
+NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS=false
 ```
 
-Make sure the Gemini API (`generativelanguage.googleapis.com`) is enabled for the Google Cloud project that owns the key.
+### OpenAI Mode
 
-For full OpenAI mode:
+Use this if you have an OpenAI API key.
 
 ```env
 AI_PROVIDER=openai
-EMBEDDING_PROVIDER=openai
-OPENAI_API_KEY=...
+OPENAI_API_KEY=your_key_here
 OPENAI_CLASSIFICATION_MODEL=gpt-4.1-mini
-OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_PROVIDER=hash
+PERSISTENCE_PROVIDER=memory
+NEXT_PUBLIC_ENABLE_SAMPLE_TICKETS=false
 ```
 
-Gemini can be used as the real AI provider for classification and copilot drafts. Embeddings can stay local with `EMBEDDING_PROVIDER=hash`, or use OpenAI embeddings if OpenAI API quota is available.
+`EMBEDDING_PROVIDER=hash` keeps knowledge search local and free. The AI provider is used for ticket classification and Copilot reply drafting.
 
-Gemini can be used as the real AI provider for classification and copilot drafts. Embeddings can stay local with `EMBEDDING_PROVIDER=hash`, or use OpenAI embeddings if OpenAI API quota is available.
-
-## Run Locally
-
-Install dependencies:
-
-Windows PowerShell and Linux/macOS:
-
-```bash
-pnpm install
-```
-
-Start infrastructure:
-
-Windows PowerShell and Linux/macOS:
-
-```bash
-docker compose up -d postgres redis
-```
-
-Generate Prisma client and apply migrations:
-
-Windows PowerShell and Linux/macOS:
-
-```bash
-pnpm db:generate
-pnpm --filter @support/database exec prisma migrate deploy
-```
-
-Run the API and web app:
+## Run
 
 Windows PowerShell and Linux/macOS:
 
@@ -147,40 +89,48 @@ Open:
 - Web UI: http://localhost:3000
 - API health: http://localhost:4000/health
 
-If you change `.env`, restart `pnpm dev` so the API process and Next.js client environment are rebuilt.
+If you change `.env`, stop the dev server and run `pnpm dev` again.
 
-## How To Test The Product Flow
+## Run With PostgreSQL
 
-Use the Web UI:
+For persistent local storage, set:
+
+```env
+PERSISTENCE_PROVIDER=prisma
+```
+
+Then start the database and apply migrations.
+
+Windows PowerShell and Linux/macOS:
+
+```bash
+docker compose up -d postgres redis
+pnpm db:generate
+pnpm --filter @support/database exec prisma migrate deploy
+pnpm dev
+```
+
+## How To Check The Product
 
 1. Open `Triage`.
-2. Paste a support request, for example:
-
-   ```text
-   I was charged twice for my subscription and I want a refund immediately.
-   ```
-
+2. Paste a customer ticket.
 3. Click `Classify Ticket`.
-4. Confirm the result shows category, priority, confidence, evidence, review reasons, and automation eligibility.
-5. Open `Knowledge Base`.
-6. Search:
+4. Review category, priority, confidence, evidence, and automation decision.
+5. Click `Draft Reply in Copilot`.
+6. Generate reply variants in `Copilot`.
+7. Check the cited knowledge at the bottom of the Copilot result.
+8. Use `Accept`, `Reject`, `Escalate`, or `Bad Output`.
+9. Open `Audit Log` to see recorded AI and human-review events.
 
-   ```text
-   refund
-   ```
+Example ticket:
 
-7. Confirm `Refund And Chargeback Policy` appears in citations.
-8. Open `Copilot`.
-9. Paste the same ticket and click `Generate Drafts`.
-10. Confirm the draft includes reply variants, citations, review reasons, and an automation decision.
-11. Use `Accept`, `Reject`, `Escalate`, or `Bad Output`.
-12. Open `Audit Log` and confirm AI run and human decision events are recorded.
-
-In the expected refund flow, the system should classify the ticket as `refund_request`, mark it as high priority, block automation, and route the decision to a human because money movement requires review.
+```text
+I was charged twice for my subscription and I want a refund immediately.
+```
 
 ## Seeded Knowledge Base
 
-The current knowledge base contains five generated demo documents:
+The project includes five demo knowledge documents:
 
 - `Subscription Cancellation Playbook`
 - `Refund And Chargeback Policy`
@@ -188,161 +138,39 @@ The current knowledge base contains five generated demo documents:
 - `Expert Complaint Escalation`
 - `Account Access And Privacy Handling`
 
-These are fixtures for testing retrieval, citations, and automation boundaries. In a real deployment, they would be replaced or extended with the company's actual support policies, help-center articles, playbooks, and escalation rules.
+They are test data for retrieval and citations. In a real project, these would be replaced with real company support policies.
 
-## Verification Commands
+## Useful Commands
 
-Run all standard checks:
-
-Windows PowerShell and Linux/macOS:
+Run checks:
 
 ```bash
 pnpm lint
-pnpm schema:check
 pnpm test
 pnpm build
 ```
 
-Run evals:
-
-Windows PowerShell and Linux/macOS:
+Run evaluations:
 
 ```bash
 pnpm eval
 pnpm eval:classification
 ```
 
-Check database migration status:
-
-Windows PowerShell and Linux/macOS:
-
-```bash
-pnpm --filter @support/database exec prisma migrate status
-```
-
 Open Prisma Studio:
-
-Windows PowerShell and Linux/macOS:
 
 ```bash
 pnpm db:studio
 ```
 
-## Useful API Checks
+## Project Structure
 
-Health:
-
-Windows PowerShell:
-
-```powershell
-Invoke-RestMethod -Method Get -Uri http://localhost:4000/health
-```
-
-Linux/macOS:
-
-```bash
-curl http://localhost:4000/health
-```
-
-Classify a ticket:
-
-Windows PowerShell:
-
-```powershell
-$body = @{
-  subject = "Double charge refund"
-  text = "I was charged twice for my subscription and I want a refund immediately."
-  source = "manual"
-} | ConvertTo-Json
-
-Invoke-RestMethod -Method Post `
-  -Uri http://localhost:4000/v1/classifications `
-  -ContentType "application/json" `
-  -Body $body
-```
-
-Linux/macOS:
-
-```bash
-curl -X POST http://localhost:4000/v1/classifications \
-  -H "Content-Type: application/json" \
-  -d '{
-    "subject": "Double charge refund",
-    "text": "I was charged twice for my subscription and I want a refund immediately.",
-    "source": "manual"
-  }'
-```
-
-Search knowledge:
-
-Windows PowerShell:
-
-```powershell
-$body = @{
-  query = "refund"
-  topK = 5
-} | ConvertTo-Json
-
-Invoke-RestMethod -Method Post `
-  -Uri http://localhost:4000/v1/knowledge/search `
-  -ContentType "application/json" `
-  -Body $body
-```
-
-Linux/macOS:
-
-```bash
-curl -X POST http://localhost:4000/v1/knowledge/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "refund",
-    "topK": 5
-  }'
-```
-
-Create a copilot draft:
-
-Windows PowerShell:
-
-```powershell
-$body = @{
-  subject = "Double charge refund"
-  text = "I was charged twice for my subscription and I want a refund immediately."
-  source = "manual"
-  topK = 5
-} | ConvertTo-Json
-
-Invoke-RestMethod -Method Post `
-  -Uri http://localhost:4000/v1/copilot/drafts `
-  -ContentType "application/json" `
-  -Body $body
-```
-
-Linux/macOS:
-
-```bash
-curl -X POST http://localhost:4000/v1/copilot/drafts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "subject": "Double charge refund",
-    "text": "I was charged twice for my subscription and I want a refund immediately.",
-    "source": "manual",
-    "topK": 5
-  }'
-```
-
-## Production Notes
-
-Production validation requires:
-
-- `NODE_ENV=production`
-- `PERSISTENCE_PROVIDER=prisma`
-- `AUTH_MODE=headers`
-- `AI_PROVIDER=openai`
-- `AI_PROVIDER=gemini` is also supported for real classification and reply generation.
-- `EMBEDDING_PROVIDER=openai`
-- `TRACING_PROVIDER=opentelemetry`
-- `OPENAI_API_KEY` set when using OpenAI
-- `GEMINI_API_KEY` set when using Gemini
-
-The local demo can run with `AUTH_MODE=disabled`, but production must use authenticated headers or a real auth integration.
+- `apps/web` - Next.js UI
+- `apps/api` - Fastify API
+- `packages/domain` - support domain rules
+- `packages/contracts` - shared Zod schemas
+- `packages/ai` - AI providers, prompts, classifier and Copilot logic
+- `packages/retrieval` - knowledge documents, chunks, embeddings, citations
+- `packages/database` - Prisma schema, migrations, repositories
+- `packages/audit` - audit events
+- `packages/observability` - metrics and tracing helpers

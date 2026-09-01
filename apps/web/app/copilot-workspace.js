@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { createElement, useEffect, useMemo, useState } from "react";
 import { draftCopilotReply, submitAgentFeedback } from "../lib/api-client.js";
 import { webEnv } from "../lib/env.js";
+import { LoadingState } from "./loading-state.js";
 
 const sampleTickets = [
   {
@@ -40,9 +41,11 @@ function eligibilityClass(value) {
   return `status-pill status-${value.replaceAll("_", "-")}`;
 }
 
-export function CopilotWorkspace() {
+export function CopilotWorkspace({ incomingTicket }) {
   const [subject, setSubject] = useState("");
   const [ticketText, setTicketText] = useState(sampleTickets[0].text);
+  const [source, setSource] = useState("manual");
+  const [providedClassification, setProvidedClassification] = useState(null);
   const [result, setResult] = useState(null);
   const [selectedTone, setSelectedTone] = useState("formal");
   const [editableReply, setEditableReply] = useState("");
@@ -62,6 +65,23 @@ export function CopilotWorkspace() {
     );
   }, [result, selectedTone]);
 
+  useEffect(() => {
+    if (!incomingTicket) {
+      return;
+    }
+
+    setSubject(incomingTicket.subject ?? "");
+    setTicketText(incomingTicket.text ?? "");
+    setSource(incomingTicket.source ?? "manual");
+    setProvidedClassification(incomingTicket.classification ?? null);
+    setResult(null);
+    setSelectedTone("formal");
+    setEditableReply("");
+    setDecision("draft");
+    setFeedbackStatus("");
+    setError(null);
+  }, [incomingTicket]);
+
   async function handleSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -73,7 +93,8 @@ export function CopilotWorkspace() {
       const response = await draftCopilotReply({
         subject: subject.trim() || undefined,
         text: ticketText,
-        source: "manual",
+        source,
+        classification: providedClassification ?? undefined,
         topK: 5
       });
       const firstVariant = response.data.replyVariants[0];
@@ -95,6 +116,16 @@ export function CopilotWorkspace() {
     setFeedbackStatus("");
   }
 
+  function handleSubjectChange(value) {
+    setSubject(value);
+    setProvidedClassification(null);
+  }
+
+  function handleTicketTextChange(value) {
+    setTicketText(value);
+    setProvidedClassification(null);
+  }
+
   async function handleAgentDecision(nextDecision) {
     if (!result || !selectedVariant) {
       return;
@@ -110,7 +141,10 @@ export function CopilotWorkspace() {
         decision: nextDecision,
         tone: selectedVariant.tone,
         editedContent: editableReply,
-        reason: nextDecision === "marked_bad_output" ? "Agent marked this AI output for review." : undefined
+        reason:
+          nextDecision === "marked_bad_output"
+            ? "Agent marked this AI output for review."
+            : undefined
       });
       setFeedbackStatus("Saved");
     } catch (requestError) {
@@ -138,7 +172,7 @@ export function CopilotWorkspace() {
           <span>Subject</span>
           <input
             value={subject}
-            onChange={(event) => setSubject(event.target.value)}
+            onChange={(event) => handleSubjectChange(event.target.value)}
             placeholder="Optional ticket subject"
           />
         </label>
@@ -147,7 +181,7 @@ export function CopilotWorkspace() {
           <span>Ticket Text</span>
           <textarea
             value={ticketText}
-            onChange={(event) => setTicketText(event.target.value)}
+            onChange={(event) => handleTicketTextChange(event.target.value)}
             placeholder="Paste customer message"
           />
         </label>
@@ -159,7 +193,7 @@ export function CopilotWorkspace() {
                 className="sample-button"
                 key={sample.label}
                 type="button"
-                onClick={() => setTicketText(sample.text)}
+                onClick={() => handleTicketTextChange(sample.text)}
               >
                 {sample.label}
               </button>
@@ -169,13 +203,23 @@ export function CopilotWorkspace() {
 
         {error ? <div className="error-banner">{error}</div> : null}
 
-        <button className="primary-button" disabled={!ticketText.trim() || isSubmitting} type="submit">
+        <button
+          className="primary-button"
+          disabled={!ticketText.trim() || isSubmitting}
+          type="submit"
+        >
           {isSubmitting ? "Drafting" : "Generate Drafts"}
         </button>
       </form>
 
       <section className="copilot-main-column">
-        {result ? (
+        {isSubmitting ? (
+          createElement(LoadingState, {
+            title: "Preparing Drafts",
+            message:
+              "The AI is classifying the ticket, searching knowledge, and drafting reply variants."
+          })
+        ) : result ? (
           <>
             <div className="copilot-summary-grid">
               <section className="panel copilot-summary-panel">
@@ -286,7 +330,10 @@ export function CopilotWorkspace() {
                       <button type="button" onClick={() => handleAgentDecision("escalated")}>
                         Escalate
                       </button>
-                      <button type="button" onClick={() => handleAgentDecision("marked_bad_output")}>
+                      <button
+                        type="button"
+                        onClick={() => handleAgentDecision("marked_bad_output")}
+                      >
                         Bad Output
                       </button>
                     </div>

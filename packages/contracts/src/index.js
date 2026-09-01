@@ -97,7 +97,8 @@ export const knowledgeSearchResponseSchema = z.object({
 export const replyToneValues = Object.freeze(["formal", "empathetic", "concise"]);
 
 export const copilotRequestSchema = classificationRequestSchema.extend({
-  topK: z.number().int().min(1).max(10).default(5)
+  topK: z.number().int().min(1).max(10).default(5),
+  classification: classificationResponseSchema.optional()
 });
 
 export const replyVariantSchema = z.object({

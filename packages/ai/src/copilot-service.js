@@ -1,4 +1,8 @@
-import { copilotDraftResponseSchema, copilotRequestSchema, copilotResponseSchema } from "@support/contracts";
+import {
+  copilotDraftResponseSchema,
+  copilotRequestSchema,
+  copilotResponseSchema
+} from "@support/contracts";
 import { resolveAutomationPolicy, reviewReasons } from "@support/domain";
 import { buildCopilotPrompt } from "./copilot-prompt.js";
 import { describePromptRun } from "./prompt-registry.js";
@@ -23,8 +27,9 @@ export class CopilotService {
   async draftReply(input) {
     const request = copilotRequestSchema.parse(input);
     const startedAt = this.clock();
-    const classificationResult = await this.classificationService.classify(request);
-    const classification = classificationResult.classification;
+    const classification =
+      request.classification ??
+      (await this.classificationService.classify(toClassificationRequest(request))).classification;
     const retrievalResult = await this.knowledgeRetriever.search({
       query: buildRetrievalQuery({ request, classification }),
       topK: request.topK
@@ -89,6 +94,16 @@ export class CopilotService {
 
     return record;
   }
+}
+
+function toClassificationRequest(request) {
+  return {
+    subject: request.subject,
+    text: request.text,
+    source: request.source,
+    customerId: request.customerId,
+    externalId: request.externalId
+  };
 }
 
 function buildRetrievalQuery({ request, classification }) {

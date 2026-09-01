@@ -244,6 +244,39 @@ describe("copilot route", () => {
     assert.equal(typeof body.meta.draftId, "string");
   });
 
+  it("accepts an existing triage classification for copilot drafts", async () => {
+    app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/copilot/drafts",
+      payload: {
+        text: "I was charged twice and want a refund.",
+        source: "manual",
+        classification: {
+          category: "refund_request",
+          priority: "high",
+          automationEligibility: "automation_blocked",
+          confidence: 0.95,
+          recommendedNextStep: "Send to a human agent for refund-policy review.",
+          rationale: "The customer asks for a refund.",
+          reviewReasons: ["financial_decision"],
+          evidence: [
+            {
+              quote: "I was charged twice and want a refund.",
+              reason: "Refund request"
+            }
+          ]
+        }
+      }
+    });
+    const body = response.json();
+
+    assert.equal(response.statusCode, 201);
+    assert.equal(body.data.classification.category, "refund_request");
+    assert.equal(body.data.automationEligibility, "automation_blocked");
+  });
+
   it("returns validation errors for invalid copilot requests", async () => {
     app = await buildApp();
 

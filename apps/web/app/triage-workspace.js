@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { createElement, useMemo, useState } from "react";
 import { classifyTicket } from "../lib/api-client.js";
 import { webEnv } from "../lib/env.js";
+import { LoadingState } from "./loading-state.js";
 
 const sampleTickets = [
   {
@@ -38,8 +39,10 @@ const eligibilitySummaries = {
 
 const eligibilityActions = {
   safe_to_suggest: "Use the recommendation as a draft and confirm before sending.",
-  human_review_required: "Review the flagged reasons, inspect the ticket context, then accept or escalate.",
-  automation_blocked: "Escalate to the responsible support queue and do not perform automated actions."
+  human_review_required:
+    "Review the flagged reasons, inspect the ticket context, then accept or escalate.",
+  automation_blocked:
+    "Escalate to the responsible support queue and do not perform automated actions."
 };
 
 const reviewReasonLabels = {
@@ -71,10 +74,9 @@ function hasReviewReasons(result) {
   return result.data.reviewReasons.length > 0;
 }
 
-export function TriageWorkspace() {
+export function TriageWorkspace({ onDraftInCopilot }) {
   const [subject, setSubject] = useState("");
   const [ticketText, setTicketText] = useState(sampleTickets[0].text);
-  const [source, setSource] = useState("manual");
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +99,7 @@ export function TriageWorkspace() {
       const response = await classifyTicket({
         subject: subject.trim() || undefined,
         text: ticketText,
-        source
+        source: "manual"
       });
 
       setResult(response);
@@ -116,13 +118,6 @@ export function TriageWorkspace() {
             <p className="section-label">Incoming Ticket</p>
             <h2>Request Details</h2>
           </div>
-          <select value={source} onChange={(event) => setSource(event.target.value)}>
-            <option value="manual">Manual</option>
-            <option value="api">API</option>
-            <option value="webhook">Webhook</option>
-            <option value="slack">Slack</option>
-            <option value="crm">CRM</option>
-          </select>
         </div>
 
         <label className="field">
@@ -178,7 +173,12 @@ export function TriageWorkspace() {
           ) : null}
         </div>
 
-        {result ? (
+        {isSubmitting ? (
+          createElement(LoadingState, {
+            title: "Classifying Ticket",
+            message: "The AI is reviewing the ticket text, priority, automation risk, and evidence."
+          })
+        ) : result ? (
           <div className="result-stack">
             <div className="metric-grid">
               <div className="metric">
@@ -199,6 +199,21 @@ export function TriageWorkspace() {
               <h3>Next Step</h3>
               <p>{result.data.recommendedNextStep}</p>
             </section>
+
+            <button
+              className="secondary-action-button"
+              type="button"
+              onClick={() =>
+                onDraftInCopilot?.({
+                  subject: subject.trim(),
+                  text: ticketText,
+                  source: "manual",
+                  classification: result.data
+                })
+              }
+            >
+              Draft Reply in Copilot
+            </button>
 
             <section className="result-block">
               <h3>Rationale</h3>

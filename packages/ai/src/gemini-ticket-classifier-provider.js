@@ -118,9 +118,9 @@ const copilotDraftJsonSchema = {
 export class GeminiTicketClassifierProvider {
   constructor({
     apiKey,
-    model = "gemini-2.5-flash",
+    model = "gemini-3.6-flash",
     fetchImpl = globalThis.fetch,
-    endpoint = "https://generativelanguage.googleapis.com/v1/interactions"
+    endpoint = "https://generativelanguage.googleapis.com/v1beta"
   }) {
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is required when AI_PROVIDER is gemini");
@@ -158,19 +158,27 @@ export class GeminiTicketClassifierProvider {
   }
 
   async requestStructuredOutput({ prompt, schema, errorLabel }) {
-    const response = await this.fetchImpl(this.endpoint, {
+    const url = `${this.endpoint}/models/${this.model}:generateContent`;
+    const response = await this.fetchImpl(url, {
       method: "POST",
       headers: {
         "x-goog-api-key": this.apiKey,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: this.model,
-        input: toInput(prompt),
-        response_format: {
-          type: "text",
-          mime_type: "application/json",
-          schema
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: toInput(prompt)
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: toGeminiResponseSchema(schema)
         }
       })
     });
@@ -206,4 +214,26 @@ function toInput(prompt) {
   return prompt.messages
     .map((message) => `${message.role.toUpperCase()}:\n${message.content}`)
     .join("\n\n");
+}
+
+function toGeminiResponseSchema(value) {
+  if (Array.isArray(value)) {
+    return value.map(toGeminiResponseSchema);
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const sanitized = {};
+
+  for (const [key, childValue] of Object.entries(value)) {
+    if (key === "additionalProperties") {
+      continue;
+    }
+
+    sanitized[key] = toGeminiResponseSchema(childValue);
+  }
+
+  return sanitized;
 }

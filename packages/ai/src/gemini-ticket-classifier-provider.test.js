@@ -78,13 +78,18 @@ describe("GeminiTicketClassifierProvider", () => {
     });
 
     assert.equal(result.category, ticketCategories.subscription);
-    assert.equal(capturedRequest.url, "https://generativelanguage.googleapis.com/v1/interactions");
+    assert.equal(
+      capturedRequest.url,
+      "https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"
+    );
     assert.equal(capturedRequest.request.headers["x-goog-api-key"], "test-key");
-    assert.equal(capturedRequest.body.model, "test-model");
-    assert.equal(capturedRequest.body.response_format.mime_type, "application/json");
-    assert.equal(capturedRequest.body.response_format.schema.additionalProperties, false);
-    assert.match(capturedRequest.body.input, /classify customer support/u);
-    assert.match(capturedRequest.body.input, /Ticket text/u);
+    assert.equal(capturedRequest.body.generationConfig.responseMimeType, "application/json");
+    assert.equal(
+      capturedRequest.body.generationConfig.responseSchema.additionalProperties,
+      undefined
+    );
+    assert.match(capturedRequest.body.contents[0].parts[0].text, /classify customer support/u);
+    assert.match(capturedRequest.body.contents[0].parts[0].text, /Ticket text/u);
   });
 
   it("fails without an API key", () => {
@@ -153,7 +158,7 @@ describe("GeminiTicketClassifierProvider", () => {
     });
 
     assert.equal(result.replyVariants.length, 3);
-    assert.equal(capturedRequest.body.response_format.schema.required[0], "summary");
+    assert.equal(capturedRequest.body.generationConfig.responseSchema.required[0], "summary");
   });
 });
 
