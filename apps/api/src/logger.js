@@ -27,7 +27,6 @@ export function createLoggerOptions() {
         "headers.x-support-user-id",
         "headers.x-support-user-name",
         "OPENAI_API_KEY",
-        "ANTHROPIC_API_KEY",
         "DATABASE_URL",
         "REDIS_URL"
       ],

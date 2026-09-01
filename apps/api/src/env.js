@@ -36,8 +36,7 @@ const envSchema = z.object({
     .min(1)
     .default("postgresql://support:support@localhost:5432/support_ai_copilot"),
   REDIS_URL: z.string().min(1).default("redis://localhost:6379"),
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional()
+  OPENAI_API_KEY: z.string().optional()
 }).superRefine((value, context) => {
   if (value.NODE_ENV === "production" && value.AUTH_MODE === "disabled") {
     context.addIssue({
